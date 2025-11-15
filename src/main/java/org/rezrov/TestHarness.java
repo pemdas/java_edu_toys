@@ -11,9 +11,10 @@ public class TestHarness {
         ImageTile wide = new ImageTile("/home/justin/Desktop/wide.png");
         ImageTile tall = new ImageTile("/home/justin/Desktop/tall.png");
 
-        d.setTile(0, 0, robot);
-        d.setTile(1, 0, wide);
-        d.setTile(0, 1, tall);
+        d.setTile(0, 0, robot, 90);
+        d.setTile(1, 1, robot, 90);
+        d.setTile(2, 3, robot, 180);
+        d.setTile(4, 6, robot, 270);
         while (true) {
             char c = d.nextInput();
             System.out.println("Got " + c);

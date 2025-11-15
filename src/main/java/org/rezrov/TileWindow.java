@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -67,7 +68,8 @@ public class TileWindow {
             }
 
             // Scale so that each cell is 1x1.
-            g.scale(usedSize.width / (double) cols, usedSize.height / (double) rows);
+            double scale = usedSize.width / (double) cols;
+            g.scale(scale, scale);
         }
 
         @Override
@@ -76,18 +78,39 @@ public class TileWindow {
 
             g.setColor(Color.BLACK);
             g.fillRect(0, 0, getSize().width, getSize().height);
+
             setUpTransform(g);
             g.setColor(Color.WHITE);
             g.fillRect(0, 0, cols, rows);
 
+            g.setColor(Color.RED);
             for (int r = 0; r < rows; ++r) {
                 for (int c = 0; c < cols; ++c) {
                     if (_cellContents[r][c].tile != null) {
-                        _cellContents[r][c].tile.draw(g, new Rectangle2D.Double(r, c, 1, 1));
+                        AffineTransform savedTransform = g.getTransform();
+
+                        /*
+                         * g.translate(-c + 0.5, -r + 0.5);
+                         * g.rotate(Math.PI / 4);
+                         * g.translate(c - 0.5, r - 0.5);
+                         */
+                        // g.translate(c + 0.5, r + 0.5);
+                        g.translate(c, r);
+                        g.rotate(_cellContents[r][c].rotation, 0.5, 0.5);
+                        // g.setColor(Color.RED);
+                        // g.fill(new Rectangle2D.Double(0, 0, 0.5, 0.5));
+                        // g.setColor(Color.GREEN);
+                        // g.fill(new Rectangle2D.Double(0, 0.5, 0.5, 0.5));
+                        // g.setColor(Color.BLUE);
+                        // g.fill(new Rectangle2D.Double(0.5, 0, 0.5, 0.5));
+                        // g.setColor(Color.YELLOW);
+                        // g.fill(new Rectangle2D.Double(0.5, 0.5, 0.5, 0.5));
+                        // g.fillRect(0, 0, 1, 1);
+                        _cellContents[r][c].tile.draw(g, new Rectangle2D.Double(0, 0, 1, 1));
+                        g.setTransform(savedTransform);
                     }
                 }
             }
-
         }
 
     }
@@ -175,7 +198,12 @@ public class TileWindow {
     }
 
     public void setTile(int row, int col, Tile tile) {
+        setTile(row, col, tile, 0);
+    }
+
+    public void setTile(int row, int col, Tile tile, double rotationDegrees) {
         _cellContents[row][col].tile = tile;
+        _cellContents[row][col].rotation = Math.toRadians(rotationDegrees);
     }
 
     public void clearTile(int row, int col) {
