@@ -15,11 +15,25 @@ public class TestHarness {
         d.setTile(1, 1, robot, 90);
         d.setTile(2, 3, robot, 180);
         d.setTile(4, 6, robot, 270);
+        d.setTile(4, 4, robot, 60);
         while (true) {
-            char c = d.nextInput();
-            System.out.println("Got " + c);
+            char ch = d.nextInput();
 
-            if (c == 'q') {
+            int rotation = 0;
+            if (ch == 'a') {
+                rotation = 270;
+            } else if (ch == 's') {
+                rotation = 180;
+            } else if (ch == 'd') {
+                rotation = 90;
+            }
+            for (int r = 0; r < 10; ++r) {
+                for (int c = 0; c < 10; ++c) {
+                    d.setTile(r, c, robot, rotation);
+                }
+            }
+
+            if (ch == 'q') {
                 break;
             }
 

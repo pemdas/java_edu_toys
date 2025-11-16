@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -77,22 +78,26 @@ public class MipMap2D implements Tile {
      */
     public void draw(Graphics2D g, Rectangle2D dest) {
         AffineTransform transform = g.getTransform();
-
         assert Math.abs(transform.getScaleX() - transform.getScaleY()) < .00001;
         assert transform.getShearX() == 0 && transform.getShearY() == 0;
         assert !dest.isEmpty();
 
-        // Determine the actual pixel size of the rectangle by backing out
-        // the affine transformation. (This is a little questionable, since
-        // there are sometimes tricks played such that window coordinates are not
-        // pixel coordinates, but it's the best we can do using Graphics2D, I think).
-        double destWidthPx = dest.getWidth() * transform.getScaleX();
+        Point2D.Double destA = new Point2D.Double(dest.getX(), 0);
+        Point2D.Double destB = new Point2D.Double(dest.getX() + dest.getWidth(), 0);
+
+        Point2D.Double pxDestA = new Point2D.Double();
+        Point2D.Double pxDestB = new Point2D.Double();
+        transform.transform(destA, pxDestA);
+        transform.transform(destB, pxDestB);
+
+        // It seems like there must be an easier way to derive this.
+        double pxDestWidth = pxDestA.distance(pxDestB);
 
         // Get the smallest mipmap which has a dimension larger than either the dest
         // width or the dest height.
         int idx = 0;
         for (Entry e : _mipMaps) {
-            if (e.dimension.width < destWidthPx) {
+            if (e.dimension.width < pxDestWidth) {
                 break;
             }
             ++idx;

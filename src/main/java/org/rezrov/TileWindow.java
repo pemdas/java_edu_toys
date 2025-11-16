@@ -11,7 +11,6 @@ import java.awt.event.KeyEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Queue;
 
@@ -51,7 +50,7 @@ public class TileWindow {
         private void setUpTransform(Graphics2D g) {
             Dimension size = getSize();
             double aspectRatio = size.width / (double) size.height;
-            double desiredAspectRatio = cols / (double) rows;
+            double desiredAspectRatio = _cols / (double) _rows;
 
             // Account for some floating point arithmetic slop. If the
             // aspect ratios are very close, they are probably actually identical.
@@ -68,7 +67,7 @@ public class TileWindow {
             }
 
             // Scale so that each cell is 1x1.
-            double scale = usedSize.width / (double) cols;
+            double scale = usedSize.width / (double) _cols;
             g.scale(scale, scale);
         }
 
@@ -81,38 +80,22 @@ public class TileWindow {
 
             setUpTransform(g);
             g.setColor(Color.WHITE);
-            g.fillRect(0, 0, cols, rows);
+            g.fillRect(0, 0, _cols, _rows);
 
-            g.setColor(Color.RED);
-            for (int r = 0; r < rows; ++r) {
-                for (int c = 0; c < cols; ++c) {
-                    if (_cellContents[r][c].tile != null) {
-                        AffineTransform savedTransform = g.getTransform();
-
-                        /*
-                         * g.translate(-c + 0.5, -r + 0.5);
-                         * g.rotate(Math.PI / 4);
-                         * g.translate(c - 0.5, r - 0.5);
-                         */
-                        // g.translate(c + 0.5, r + 0.5);
-                        g.translate(c, r);
-                        g.rotate(_cellContents[r][c].rotation, 0.5, 0.5);
-                        // g.setColor(Color.RED);
-                        // g.fill(new Rectangle2D.Double(0, 0, 0.5, 0.5));
-                        // g.setColor(Color.GREEN);
-                        // g.fill(new Rectangle2D.Double(0, 0.5, 0.5, 0.5));
-                        // g.setColor(Color.BLUE);
-                        // g.fill(new Rectangle2D.Double(0.5, 0, 0.5, 0.5));
-                        // g.setColor(Color.YELLOW);
-                        // g.fill(new Rectangle2D.Double(0.5, 0.5, 0.5, 0.5));
-                        // g.fillRect(0, 0, 1, 1);
-                        _cellContents[r][c].tile.draw(g, new Rectangle2D.Double(0, 0, 1, 1));
-                        g.setTransform(savedTransform);
+            synchronized (this) { // Synchronzied for access to cell contents.
+                for (int r = 0; r < _rows; ++r) {
+                    for (int c = 0; c < _cols; ++c) {
+                        if (_cellContents[r][c].tile != null) {
+                            AffineTransform savedTransform = g.getTransform();
+                            g.translate(c, r);
+                            g.rotate(_cellContents[r][c].rotation, 0.5, 0.5);
+                            _cellContents[r][c].tile.draw(g, new Rectangle2D.Double(0, 0, 1, 1));
+                            g.setTransform(savedTransform);
+                        }
                     }
                 }
             }
         }
-
     }
 
     public TileWindow() {
@@ -126,74 +109,69 @@ public class TileWindow {
         if (rows > 100 || cols > 100) {
             throw new IllegalArgumentException("TileWindow rows and columns can't be more than 100");
         }
-        this.rows = rows;
-        this.cols = cols;
+        this._rows = rows;
+        this._cols = cols;
         _cellContents = new Cell[rows][cols];
         for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < cols; ++j) {
                 _cellContents[i][j] = new Cell();
             }
         }
-        creator = Thread.currentThread();
+        _creator = Thread.currentThread();
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 createAndShowGUI();
             }
         });
-        quitPoll = new Timer(QUIT_POLL_INTERVAL_MS, new ActionListener() {
+        _quitPollTimer = new Timer(QUIT_POLL_INTERVAL_MS, new ActionListener() {
             public void actionPerformed(ActionEvent event) {
-                if (!creator.isAlive()) {
-                    if (verbosity > 0) {
+                if (!_creator.isAlive()) {
+                    if (_verbosity > 0) {
                         System.out.println("Detected main thread exit.  Closing TileWindow.");
                     }
-                    window.dispose();
-                    quitPoll.stop();
+                    _window.dispose();
+                    _quitPollTimer.stop();
                 }
             }
         });
-        quitPoll.start();
+        _quitPollTimer.start();
 
-    }
-
-    public int loadImage(String filename) {
-        _images.add(new MipMap2D(filename));
-        return _images.size() - 1;
     }
 
     private void createAndShowGUI() {
         // Create and set up the window.
-        window = new JFrame("Arena v2");
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        _window = new JFrame("Arena v2");
+        _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Dimension minDim = new Dimension();
-        if (rows >= cols) {
+        if (_rows >= _cols) {
             minDim.height = MIN_DIMENSION;
-            minDim.width = (int) Math.round(MIN_DIMENSION * cols / (double) rows);
+            minDim.width = (int) Math.round(MIN_DIMENSION * _cols / (double) _rows);
         } else {
             minDim.width = MIN_DIMENSION;
-            minDim.height = (int) Math.round(MIN_DIMENSION * rows / (double) cols);
+            minDim.height = (int) Math.round(MIN_DIMENSION * _rows / (double) _cols);
         }
 
-        canvas = new DrawCanvas();
-        canvas.setPreferredSize(minDim);
-        window.setContentPane(canvas);
+        _canvas = new DrawCanvas();
+        _canvas.setPreferredSize(minDim);
+        _window.setContentPane(_canvas);
 
-        window.pack();
-        window.setMinimumSize(window.getSize());
-        window.addKeyListener(new KeyHandler());
+        _window.pack();
+        _window.setMinimumSize(_window.getSize());
+        _window.addKeyListener(new KeyHandler());
 
-        window.setVisible(true);
+        _window.setVisible(true);
 
     }
 
     public void setVerbosity(int level) {
-        verbosity = level;
+        _verbosity = level;
     }
 
     private void addInput(char c) {
-        synchronized (inputBuffer) {
-            inputBuffer.add(c);
-            inputBuffer.notify();
+        synchronized (_inputBuffer) {
+            _inputBuffer.add(c);
+            _inputBuffer.notify();
         }
     }
 
@@ -201,30 +179,33 @@ public class TileWindow {
         setTile(row, col, tile, 0);
     }
 
-    public void setTile(int row, int col, Tile tile, double rotationDegrees) {
+    synchronized public void setTile(int row, int col, Tile tile, double rotationDegrees) {
         _cellContents[row][col].tile = tile;
         _cellContents[row][col].rotation = Math.toRadians(rotationDegrees);
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                _window.getContentPane().repaint();
+            }
+        });
     }
 
     public void clearTile(int row, int col) {
-        _cellContents[row][col].tile = null;
+        setTile(row, col, null, 0);
     }
 
     public char nextInput() {
-        synchronized (inputBuffer) {
-            if (inputBuffer.isEmpty()) {
+        synchronized (_inputBuffer) {
+            if (_inputBuffer.isEmpty()) {
                 try {
-                    inputBuffer.wait();
+                    _inputBuffer.wait();
                 } catch (InterruptedException e) {
                     System.err.println("Interrupted");
                     System.exit(-1);
                 }
             }
-            return inputBuffer.remove();
+            return _inputBuffer.remove();
         }
     }
-
-    private Queue<Character> inputBuffer = new ArrayDeque<Character>();
 
     private class Cell {
         Tile tile = null;
@@ -233,14 +214,16 @@ public class TileWindow {
 
     private Cell[][] _cellContents;
 
-    private ArrayList<MipMap2D> _images = new ArrayList<MipMap2D>();
+    private Queue<Character> _inputBuffer = new ArrayDeque<Character>();
 
-    private int rows;
-    private int cols;
+    private int _rows;
+    private int _cols;
 
-    private JFrame window;
-    private DrawCanvas canvas;
-    private Thread creator;
-    private Timer quitPoll;
-    private int verbosity = 0;
+    private JFrame _window;
+    private DrawCanvas _canvas;
+    private Thread _creator;
+
+    // Timer used to poll for whether the creating thread has exited.
+    private Timer _quitPollTimer;
+    private int _verbosity = 0;
 }
