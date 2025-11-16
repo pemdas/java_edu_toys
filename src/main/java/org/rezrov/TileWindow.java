@@ -23,9 +23,10 @@ public class TileWindow {
 
     // The longer dimension of the internal panel will have a minimum size of this
     // many pixels.
-    static final int MIN_DIMENSION = 400;
+    static final int MIN_DIMENSION = 600;
 
     private class KeyHandler extends KeyAdapter {
+
         @Override
         public void keyPressed(KeyEvent e) {
             char c = e.getKeyChar();
@@ -79,7 +80,7 @@ public class TileWindow {
             g.fillRect(0, 0, getSize().width, getSize().height);
 
             setUpTransform(g);
-            g.setColor(Color.WHITE);
+            g.setColor(_backgroundColor);
             g.fillRect(0, 0, _cols, _rows);
 
             synchronized (this) { // Synchronzied for access to cell contents.
@@ -98,11 +99,11 @@ public class TileWindow {
         }
     }
 
-    public TileWindow() {
-        this(10, 10);
+    public TileWindow(String windowTitle) {
+        this(windowTitle, 11, 21);
     }
 
-    public TileWindow(int rows, int cols) {
+    public TileWindow(String windowTitle, int rows, int cols) {
         if (rows < 1 || cols < 1) {
             throw new IllegalArgumentException("TileWindow rows and columns must each be at least 1");
         }
@@ -120,7 +121,7 @@ public class TileWindow {
         _creator = Thread.currentThread();
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                createAndShowGUI();
+                createAndShowGUI(windowTitle);
             }
         });
         _quitPollTimer = new Timer(QUIT_POLL_INTERVAL_MS, new ActionListener() {
@@ -138,9 +139,14 @@ public class TileWindow {
 
     }
 
-    private void createAndShowGUI() {
+    public void setBackgroundColor(int r, int g, int b) {
+        _backgroundColor = new Color(r, g, b);
+        scheduleRepaint();
+    }
+
+    private void createAndShowGUI(String windowTitle) {
         // Create and set up the window.
-        _window = new JFrame("Arena v2");
+        _window = new JFrame(windowTitle);
         _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Dimension minDim = new Dimension();
@@ -182,6 +188,10 @@ public class TileWindow {
     synchronized public void setTile(int row, int col, Tile tile, double rotationDegrees) {
         _cellContents[row][col].tile = tile;
         _cellContents[row][col].rotation = Math.toRadians(rotationDegrees);
+        scheduleRepaint();
+    }
+
+    private void scheduleRepaint() {
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 _window.getContentPane().repaint();
@@ -222,6 +232,8 @@ public class TileWindow {
     private JFrame _window;
     private DrawCanvas _canvas;
     private Thread _creator;
+
+    private Color _backgroundColor = Color.WHITE;
 
     // Timer used to poll for whether the creating thread has exited.
     private Timer _quitPollTimer;
