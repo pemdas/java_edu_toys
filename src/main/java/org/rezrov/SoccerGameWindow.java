@@ -1,5 +1,8 @@
 package org.rezrov;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,10 +12,13 @@ import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Queue;
 
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
-public class TileWindow {
+public class SoccerGameWindow {
     static final int QUIT_POLL_INTERVAL_MS = 50;
 
     // The longer dimension of the internal panel will have a minimum size of this
@@ -37,30 +43,42 @@ public class TileWindow {
         private HashSet<Character> pressedKeys = new HashSet<Character>();
     }
 
-    public TileWindow(String windowTitle) {
+    public SoccerGameWindow(String windowTitle) {
         this(windowTitle, 11, 21);
     }
 
-    public TileWindow(String windowTitle, int rows, int cols) {
+    public SoccerGameWindow(String windowTitle, int rows, int cols) {
         _creator = Thread.currentThread();
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI(windowTitle, rows, cols);
-            }
-        });
-        _quitPollTimer = new Timer(QUIT_POLL_INTERVAL_MS, new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
-                if (!_creator.isAlive()) {
-                    if (_verbosity > 0) {
-                        System.out.println("Detected main thread exit.  Closing TileWindow.");
-                    }
-                    _window.dispose();
-                    _quitPollTimer.stop();
-                }
-            }
-        });
-        _quitPollTimer.start();
 
+        synchronized (this) {
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    createAndShowGUI(windowTitle, rows, cols);
+                }
+            });
+
+            _quitPollTimer = new Timer(QUIT_POLL_INTERVAL_MS, new ActionListener() {
+                public void actionPerformed(ActionEvent event) {
+                    if (!_creator.isAlive()) {
+                        if (_verbosity > 0) {
+                            System.out.println("Detected main thread exit.  Closing SoccerGameWindow.");
+                        }
+                        _window.dispose();
+                        _quitPollTimer.stop();
+                    }
+                }
+            });
+            _quitPollTimer.start();
+            try {
+                // This will hold execution of this thread until the createAndShowGUI call
+                // finishes. That way, the calling thread gets to pretend there's no threading
+                // going on here; when the SoccerGameWindow constructor returns, the methods
+                // are safe to use.
+                wait();
+            } catch (InterruptedException ie) {
+                throw new IllegalStateException(ie);
+            }
+        }
     }
 
     private void createAndShowGUI(String windowTitle, int rows, int cols) {
@@ -78,15 +96,32 @@ public class TileWindow {
         }
 
         _canvas = new TileCanvas(rows, cols);
+        // Make the background green.
+        _canvas.setBackgroundColor(new Color(16, 126, 0));
         _canvas.setPreferredSize(minDim);
-        _window.setContentPane(_canvas);
+
+        Container pane = _window.getContentPane();
+        pane.setLayout(new BoxLayout(pane, BoxLayout.PAGE_AXIS));
+        _scoreLabel = new JLabel("0 - 0");
+        _scoreLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        _scoreLabel.setMaximumSize(new Dimension(100000, 50));
+        _scoreLabel.setBackground(Color.WHITE);
+        _scoreLabel.setOpaque(true);
+        _scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        _scoreLabel.setFont(_scoreLabel.getFont().deriveFont(30.f));
+        pane.add(_scoreLabel);
+        pane.add(_canvas);
 
         _window.pack();
         _window.setMinimumSize(_window.getSize());
         _window.addKeyListener(new KeyHandler());
 
         _window.setVisible(true);
-
+        synchronized (this) {
+            // Now that the gui is constructed, we can let the SoccerGameWindow construction
+            // complete.
+            notify();
+        }
     }
 
     public void setVerbosity(int level) {
@@ -118,17 +153,21 @@ public class TileWindow {
                 try {
                     _inputBuffer.wait();
                 } catch (InterruptedException e) {
-                    System.err.println("Interrupted");
-                    System.exit(-1);
+                    throw new IllegalStateException(e);
                 }
             }
             return _inputBuffer.remove();
         }
     }
 
+    public void setScore(int left, int right) {
+        _scoreLabel.setText(String.format("%d - %d", left, right));
+    }
+
     private Queue<Character> _inputBuffer = new ArrayDeque<Character>();
 
     private JFrame _window;
+    private JLabel _scoreLabel;
     private TileCanvas _canvas;
     private Thread _creator;
 

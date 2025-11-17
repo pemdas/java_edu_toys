@@ -10,7 +10,6 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.JPanel;
 
 public class TileCanvas extends JPanel {
-
     public TileCanvas(int rows, int cols) {
         if (rows < 1 || cols < 1) {
             throw new IllegalArgumentException("TileCanvas rows and columns must each be at least 1");
@@ -62,10 +61,10 @@ public class TileCanvas extends JPanel {
         g.fillRect(0, 0, getSize().width, getSize().height);
 
         setUpTransform(g);
-        g.setColor(_backgroundColor);
-        g.fillRect(0, 0, _cols, _rows);
+        synchronized (this) { // Synchronzied for access to cell contents and background color.
+            g.setColor(_backgroundColor);
+            g.fillRect(0, 0, _cols, _rows);
 
-        synchronized (this) { // Synchronzied for access to cell contents.
             for (int r = 0; r < _rows; ++r) {
                 for (int c = 0; c < _cols; ++c) {
                     if (_cellContents[r][c].tile != null) {
@@ -87,6 +86,11 @@ public class TileCanvas extends JPanel {
     synchronized public void setTile(int row, int col, Tile tile, double rotationDegrees) {
         _cellContents[row][col].tile = tile;
         _cellContents[row][col].rotation = Math.toRadians(rotationDegrees);
+        scheduleRepaint();
+    }
+
+    synchronized public void setBackgroundColor(Color color) {
+        _backgroundColor = color;
         scheduleRepaint();
     }
 

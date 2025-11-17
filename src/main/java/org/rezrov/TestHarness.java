@@ -2,7 +2,7 @@ package org.rezrov;
 
 public class TestHarness {
     static public void main(String[] args) throws InterruptedException {
-        TileWindow d = new TileWindow("Woohoo", 10, 10);
+        SoccerGameWindow d = new SoccerGameWindow("Woohoo", 10, 10);
 
         d.setVerbosity(10);
         // int kodiak = d.loadImage("/home/jcarlson/Desktop/kodiak.png");
