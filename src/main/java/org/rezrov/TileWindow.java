@@ -1,21 +1,15 @@
 package org.rezrov;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.Queue;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class TileWindow {
@@ -23,10 +17,9 @@ public class TileWindow {
 
     // The longer dimension of the internal panel will have a minimum size of this
     // many pixels.
-    static final int MIN_DIMENSION = 600;
+    static final int MIN_DIMENSION = 800;
 
     private class KeyHandler extends KeyAdapter {
-
         @Override
         public void keyPressed(KeyEvent e) {
             char c = e.getKeyChar();
@@ -44,84 +37,15 @@ public class TileWindow {
         private HashSet<Character> pressedKeys = new HashSet<Character>();
     }
 
-    private class DrawCanvas extends JPanel {
-
-        // Set up the graphics transform so that 0, 0 is the top left of the rendering
-        // area and each cell is 1x1. Returns the pixel size of a cell.
-        private void setUpTransform(Graphics2D g) {
-            Dimension size = getSize();
-            double aspectRatio = size.width / (double) size.height;
-            double desiredAspectRatio = _cols / (double) _rows;
-
-            // Account for some floating point arithmetic slop. If the
-            // aspect ratios are very close, they are probably actually identical.
-            // (And if they aren't identical, they are close enough that not making
-            // a translation adjustement should be fine anyways)
-            Dimension usedSize = new Dimension(size);
-            if (Math.abs(aspectRatio - desiredAspectRatio) > .0001) {
-                if (desiredAspectRatio > aspectRatio) {
-                    usedSize.height = (int) Math.round(size.width / desiredAspectRatio);
-                } else {
-                    usedSize.width = (int) Math.round(size.height * desiredAspectRatio);
-                }
-                g.translate((size.width - usedSize.width) / 2.0, (size.height - usedSize.height) / 2.0);
-            }
-
-            // Scale so that each cell is 1x1.
-            double scale = usedSize.width / (double) _cols;
-            g.scale(scale, scale);
-        }
-
-        @Override
-        public void paintComponent(Graphics gr) {
-            Graphics2D g = (Graphics2D) gr;
-
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, getSize().width, getSize().height);
-
-            setUpTransform(g);
-            g.setColor(_backgroundColor);
-            g.fillRect(0, 0, _cols, _rows);
-
-            synchronized (this) { // Synchronzied for access to cell contents.
-                for (int r = 0; r < _rows; ++r) {
-                    for (int c = 0; c < _cols; ++c) {
-                        if (_cellContents[r][c].tile != null) {
-                            AffineTransform savedTransform = g.getTransform();
-                            g.translate(c, r);
-                            g.rotate(_cellContents[r][c].rotation, 0.5, 0.5);
-                            _cellContents[r][c].tile.draw(g, new Rectangle2D.Double(0, 0, 1, 1));
-                            g.setTransform(savedTransform);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     public TileWindow(String windowTitle) {
         this(windowTitle, 11, 21);
     }
 
     public TileWindow(String windowTitle, int rows, int cols) {
-        if (rows < 1 || cols < 1) {
-            throw new IllegalArgumentException("TileWindow rows and columns must each be at least 1");
-        }
-        if (rows > 100 || cols > 100) {
-            throw new IllegalArgumentException("TileWindow rows and columns can't be more than 100");
-        }
-        this._rows = rows;
-        this._cols = cols;
-        _cellContents = new Cell[rows][cols];
-        for (int i = 0; i < rows; ++i) {
-            for (int j = 0; j < cols; ++j) {
-                _cellContents[i][j] = new Cell();
-            }
-        }
         _creator = Thread.currentThread();
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                createAndShowGUI(windowTitle);
+                createAndShowGUI(windowTitle, rows, cols);
             }
         });
         _quitPollTimer = new Timer(QUIT_POLL_INTERVAL_MS, new ActionListener() {
@@ -139,26 +63,21 @@ public class TileWindow {
 
     }
 
-    public void setBackgroundColor(int r, int g, int b) {
-        _backgroundColor = new Color(r, g, b);
-        scheduleRepaint();
-    }
-
-    private void createAndShowGUI(String windowTitle) {
+    private void createAndShowGUI(String windowTitle, int rows, int cols) {
         // Create and set up the window.
         _window = new JFrame(windowTitle);
         _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Dimension minDim = new Dimension();
-        if (_rows >= _cols) {
+        if (rows >= cols) {
             minDim.height = MIN_DIMENSION;
-            minDim.width = (int) Math.round(MIN_DIMENSION * _cols / (double) _rows);
+            minDim.width = (int) Math.round(MIN_DIMENSION * cols / (double) rows);
         } else {
             minDim.width = MIN_DIMENSION;
-            minDim.height = (int) Math.round(MIN_DIMENSION * _rows / (double) _cols);
+            minDim.height = (int) Math.round(MIN_DIMENSION * rows / (double) cols);
         }
 
-        _canvas = new DrawCanvas();
+        _canvas = new TileCanvas(rows, cols);
         _canvas.setPreferredSize(minDim);
         _window.setContentPane(_canvas);
 
@@ -182,25 +101,15 @@ public class TileWindow {
     }
 
     public void setTile(int row, int col, Tile tile) {
-        setTile(row, col, tile, 0);
+        _canvas.setTile(row, col, tile);
     }
 
     synchronized public void setTile(int row, int col, Tile tile, double rotationDegrees) {
-        _cellContents[row][col].tile = tile;
-        _cellContents[row][col].rotation = Math.toRadians(rotationDegrees);
-        scheduleRepaint();
-    }
-
-    private void scheduleRepaint() {
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                _window.getContentPane().repaint();
-            }
-        });
+        _canvas.setTile(row, col, tile, rotationDegrees);
     }
 
     public void clearTile(int row, int col) {
-        setTile(row, col, null, 0);
+        _canvas.clearTile(row, col);
     }
 
     public char nextInput() {
@@ -217,23 +126,11 @@ public class TileWindow {
         }
     }
 
-    private class Cell {
-        Tile tile = null;
-        double rotation = 0;
-    }
-
-    private Cell[][] _cellContents;
-
     private Queue<Character> _inputBuffer = new ArrayDeque<Character>();
 
-    private int _rows;
-    private int _cols;
-
     private JFrame _window;
-    private DrawCanvas _canvas;
+    private TileCanvas _canvas;
     private Thread _creator;
-
-    private Color _backgroundColor = Color.WHITE;
 
     // Timer used to poll for whether the creating thread has exited.
     private Timer _quitPollTimer;
