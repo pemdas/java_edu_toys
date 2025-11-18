@@ -147,6 +147,10 @@ public class SoccerGameWindow {
         _canvas.clearTile(row, col);
     }
 
+    public void showGrid(boolean val) {
+        _canvas.showGrid(val);
+    }
+
     public char nextInput() {
         synchronized (_inputBuffer) {
             if (_inputBuffer.isEmpty()) {
@@ -162,6 +166,10 @@ public class SoccerGameWindow {
 
     public void setScore(int left, int right) {
         _scoreLabel.setText(String.format("%d - %d", left, right));
+    }
+
+    public void setBackgroundColor(int red, int green, int blue) {
+        _canvas.setBackgroundColor(new Color(red, green, blue));, 
     }
 
     private Queue<Character> _inputBuffer = new ArrayDeque<Character>();

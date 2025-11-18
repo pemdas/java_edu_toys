@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
@@ -53,9 +54,20 @@ public class TileCanvas extends JPanel {
         g.scale(scale, scale);
     }
 
+    synchronized public void showGrid(boolean val) {
+        if (val != _showGrid) {
+            _showGrid = val;
+        }
+        scheduleRepaint();
+    }
+
     @Override
     public void paintComponent(Graphics gr) {
         Graphics2D g = (Graphics2D) gr;
+        RenderingHints rh = new RenderingHints(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHints(rh);
 
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, getSize().width, getSize().height);
@@ -64,6 +76,18 @@ public class TileCanvas extends JPanel {
         synchronized (this) { // Synchronzied for access to cell contents and background color.
             g.setColor(_backgroundColor);
             g.fillRect(0, 0, _cols, _rows);
+
+            if (_showGrid) {
+                // This the proportion of a cell taken by the grid lines.
+                final double GRID_LINE_WIDTH = .02;
+                g.setColor(Color.BLACK);
+                for (int r = 1; r < _rows; ++r) {
+                    g.fill(new Rectangle2D.Double(0, r - GRID_LINE_WIDTH / 2.0, _cols, GRID_LINE_WIDTH));
+                }
+                for (int c = 1; c < _cols; ++c) {
+                    g.fill(new Rectangle2D.Double(c - GRID_LINE_WIDTH / 2.0, 0, GRID_LINE_WIDTH, _rows));
+                }
+            }
 
             for (int r = 0; r < _rows; ++r) {
                 for (int c = 0; c < _cols; ++c) {
@@ -110,6 +134,8 @@ public class TileCanvas extends JPanel {
         Tile tile = null;
         double rotation = 0;
     }
+
+    private boolean _showGrid = false;
 
     private Cell[][] _cellContents;
 
