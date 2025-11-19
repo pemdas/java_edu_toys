@@ -43,8 +43,8 @@ public class SoccerGameWindow {
         private HashSet<Character> pressedKeys = new HashSet<Character>();
     }
 
-    public SoccerGameWindow(String windowTitle) {
-        this(windowTitle, 11, 21);
+    public SoccerGameWindow() {
+        this("Lab 3", 11, 21);
     }
 
     public SoccerGameWindow(String windowTitle, int rows, int cols) {
