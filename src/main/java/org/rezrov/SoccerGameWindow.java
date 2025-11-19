@@ -169,7 +169,7 @@ public class SoccerGameWindow {
     }
 
     public void setBackgroundColor(int red, int green, int blue) {
-        _canvas.setBackgroundColor(new Color(red, green, blue));, 
+        _canvas.setBackgroundColor(new Color(red, green, blue));
     }
 
     private Queue<Character> _inputBuffer = new ArrayDeque<Character>();
