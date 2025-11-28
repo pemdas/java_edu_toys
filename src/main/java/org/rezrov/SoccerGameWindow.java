@@ -151,7 +151,9 @@ public class SoccerGameWindow {
         _canvas.showGrid(val);
     }
 
-    public char nextInput() {
+    // String is the wrong choice here, but since we haven't talked about
+    // char handling yet, using this for convenience
+    public String nextInput() {
         synchronized (_inputBuffer) {
             if (_inputBuffer.isEmpty()) {
                 try {
@@ -160,7 +162,7 @@ public class SoccerGameWindow {
                     throw new IllegalStateException(e);
                 }
             }
-            return _inputBuffer.remove();
+            return "" + _inputBuffer.remove();
         }
     }
 
