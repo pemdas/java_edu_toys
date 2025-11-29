@@ -1,10 +1,24 @@
 package org.rezrov;
 
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Random;
+
+import javax.swing.BorderFactory;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
+import javax.swing.border.BevelBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class MorseUtils {
     static final int DASH = 0;
@@ -46,8 +60,100 @@ public class MorseUtils {
 
     }
 
-    static int[] translate(String s) {
-        s = s.replaceAll(" / ", "/");
+    static JFrame _window;
+    static JTextArea _morseText;
+    static JTextArea _latinText;
+
+    static int _textAreaMargin = 10;
+
+    private static JTextArea createTextArea() {
+        JTextArea ret = new JTextArea();
+        ret.setPreferredSize(new Dimension(500, 150));
+
+        // 3. Combine them: Bevel on the outside, Padding on the inside
+        ret.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED),
+                BorderFactory.createEmptyBorder(_textAreaMargin, _textAreaMargin, _textAreaMargin, _textAreaMargin)));
+        return ret;
+
+    }
+
+    private static class MorseTextAreaListener
+            implements DocumentListener {
+
+        public void changedUpdate(DocumentEvent e) {
+        }
+
+        public void removeUpdate(DocumentEvent e) {
+            // delegate.
+            insertUpdate(e);
+        }
+
+        public void insertUpdate(DocumentEvent e) {
+            try {
+                _latinText.setText((String) decodeString.invoke(null, decodeASCII(_morseText.getText())));
+            } catch (Exception ex) {
+                // If all tests passed, this shouldn't happen...
+            }
+        }
+
+    }
+
+    private static float _fontSize = 18;
+
+    private static void createAndShowGUI() {
+        // Create and set up the window.
+        _window = new JFrame("Morse Translator Toy");
+        _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        Container pane = _window.getContentPane();
+
+        pane.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.ipadx = 5;
+        c.ipady = 5;
+        c.insets = new Insets(10, 10, 10, 10);
+        c.fill = GridBagConstraints.BOTH;
+        JLabel l = new JLabel("Morse Code", SwingConstants.RIGHT);
+        l.setFont(l.getFont().deriveFont(_fontSize));
+
+        // l.setHorizontalTextPosition(SwingConstants.LEFT);
+        pane.add(l, c);
+        c.weightx = 1;
+        c.gridx = 1;
+        _latinText = createTextArea();
+        _latinText.setMargin(new Insets(5, 5, 5, 5));
+        _latinText.setEditable(false);
+        _latinText.setFont(_latinText.getFont().deriveFont(_fontSize));
+
+        _morseText = createTextArea();
+        _morseText.setMargin(new Insets(5, 5, 5, 5));
+        _morseText.setEditable(true);
+        _morseText.getDocument().addDocumentListener(new MorseTextAreaListener());
+        _morseText.setFont(_morseText.getFont().deriveFont(_fontSize));
+
+        String startText = ".... . .-.. .-.. --- / .-- --- .-. .-.. -.."; // hello world
+        _morseText.setText(startText);
+        _morseText.setCaretPosition(startText.length());
+        pane.add(_morseText, c);
+        c.gridy = 1;
+
+        pane.add(_latinText, c);
+        c.gridx = 0;
+        c.weightx = 0;
+        l = new JLabel("Text", SwingConstants.RIGHT);
+        l.setFont(l.getFont().deriveFont(_fontSize));
+        pane.add(l, c);
+        _window.pack();
+        _window.setMinimumSize(_window.getSize());
+
+        _window.setVisible(true);
+    }
+
+    static int[] decodeASCII(String s) {
+        s = s.replaceAll("\\s+", " ");
+        s = s.replaceAll("\\s*/\\s*", "/");
         ArrayList<Integer> l = new ArrayList<Integer>();
         for (int i = 0; i < s.length(); i++) {
             switch (s.charAt(i)) {
@@ -72,6 +178,16 @@ public class MorseUtils {
             ret[i] = l.get(i);
         }
         return ret;
+    }
+
+    static String encodeASCII(int[] code) {
+        StringBuilder s = new StringBuilder();
+        for (int c : code) {
+            switch (c) {
+
+            }
+        }
+        return s.toString();
     }
 
     static class LetterTestElement {
@@ -124,7 +240,7 @@ public class MorseUtils {
 
     private static boolean testSingleDecodeString(DecodeStringTestPair p) {
         String actual;
-        int[] code = translate(p.code);
+        int[] code = decodeASCII(p.code);
         try {
             actual = (String) decodeString.invoke(null, code);
         } catch (IllegalAccessException ie) {
@@ -144,24 +260,25 @@ public class MorseUtils {
         return true;
     }
 
-    public static void testDecodeString() {
+    public static boolean testDecodeString() {
         System.out.print("Testing decodeString()...");
         if (decodeString == null) {
             System.out.println("not yet implemented");
-            return;
+            return false;
         }
 
         for (DecodeStringTestPair p : codeStringTestData) {
             if (!testSingleDecodeString(p)) {
-                return;
+                return false;
             }
         }
         System.out.println("all tests pass!");
+        return true;
     }
 
     private static boolean testSingleDecodeOne(DecodeOneTestPair p) {
 
-        int[] code = translate(p.code);
+        int[] code = decodeASCII(p.code);
         int size = 1 + code.length + rng.nextInt(3);
         int offset = rng.nextInt(size - code.length);
 
@@ -247,18 +364,19 @@ public class MorseUtils {
             new DecodeOneTestPair(".-.-.", '?')
     };
 
-    public static void testDecodeOne() {
+    public static boolean testDecodeOne() {
         System.out.print("Testing decodeOne()...");
         if (decodeOne == null) {
             System.out.println("not yet implemented");
-            return;
+            return false;
         }
         for (DecodeOneTestPair t : codeOneTestData) {
             if (!testSingleDecodeOne(t)) {
-                return;
+                return false;
             }
         }
         System.out.println("all tests pass!");
+        return true;
     }
 
     static boolean testRandomGetCharacterLength() {
@@ -300,26 +418,34 @@ public class MorseUtils {
         return true;
     }
 
-    public static void testGetCharacterLength() {
+    public static boolean testGetCharacterLength() {
         if (getCharacterLength == null) {
             System.out.println("getCharacterLength() not yet implemented");
-            return;
+            return false;
         }
         System.out.print("Testing getCharacterLength()...");
 
         for (int i = 0; i < 100; i++) {
             if (!testRandomGetCharacterLength()) {
-                return;
+                return false;
             }
         }
 
         System.out.println("all tests passed!");
+        return true;
     }
 
     public static void testLab4() {
-        testGetCharacterLength();
-        testDecodeOne();
-        testDecodeString();
+        boolean allTestsPassed = true;
+        allTestsPassed = testGetCharacterLength() && allTestsPassed;
+        allTestsPassed = testDecodeOne() && allTestsPassed;
+        allTestsPassed = testDecodeString() && allTestsPassed;
+        if (allTestsPassed) {
+            System.out.println("Starting toy");
+            createAndShowGUI();
+        } else {
+            System.out.println("Not all tests are passing.");
+        }
     }
 
 }
