@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
@@ -80,33 +81,31 @@ public class MorseUtils {
 
     private static JTextArea createTextArea() {
         JTextArea ret = new JTextArea();
-        ret.setPreferredSize(new Dimension(500, 150));
+        ret.setPreferredSize(new Dimension(600, 250));
 
         // 3. Combine them: Bevel on the outside, Padding on the inside
         ret.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED),
                 BorderFactory.createEmptyBorder(_textAreaMargin, _textAreaMargin, _textAreaMargin, _textAreaMargin)));
+        ret.setLineWrap(true);
+        ret.setWrapStyleWord(true);
+
         return ret;
 
     }
 
-    private static class RegexDocumentFilter extends DocumentFilter {
-        private String _allowed;
-
-        RegexDocumentFilter(String allowed) {
-            System.out.println("WTTTF");
-            _allowed = allowed;
+    private static class MorseDocumentFilter extends DocumentFilter {
+        @Override
+        public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                throws BadLocationException {
+            super.replace(fb, offset, length, text.replaceAll("[^.∙/ -]", "").replaceAll("\\.","∙"), attrs);
         }
+    }
 
-        public void insertString(DocumentFilter.FilterBypass fb, int offset, String string, AttributeSet attr) {
-            try {
-                System.out.println("Check " + string);
-                if (Pattern.matches(_allowed, string)) {
-                    System.out.println("OK!");
-                    super.insertString(fb, offset, string, attr);
-                }
-            } catch (BadLocationException huh) {
-                System.out.println("WTF");
-            }
+    private static class LatinDocumentFilter extends DocumentFilter {
+        @Override
+        public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                throws BadLocationException {
+            super.replace(fb, offset, length, text.toUpperCase().replaceAll("[^A-Z0-9 ]", ""), attrs);
         }
     }
 
@@ -123,7 +122,8 @@ public class MorseUtils {
 
         public void insertUpdate(DocumentEvent e) {
             try {
-                _latinText.setText((String) decodeString.invoke(null, decodeASCII(_morseText.getText())));
+                String sanitized = _morseText.getText().strip().replaceAll("\\s+", " ");
+                _latinText.setText((String) decodeString.invoke(null, decodeASCII(sanitized)));
             } catch (Exception ex) {
                 // If all tests passed, this shouldn't happen...
             }
@@ -144,15 +144,8 @@ public class MorseUtils {
 
         public void insertUpdate(DocumentEvent e) {
             try {
-                // int cursorLocation = _latinText.getCaretPosition();
-                String s = _latinText.getText().replaceAll("\\s+", " ").replaceAll("[^A-Za-z0-9 ]", "").strip();
-                System.out.println(s + " vs " + _latinText.getText());
-                if (!s.equals(_latinText.getText())) {
-                    System.out.println("Setting to " + s);
-                    _latinText.setText(s);
-                }
-                String morse = encodeASCII((int[]) encodeString.invoke(null, s));
-                System.out.println("Setting morse to " + morse);
+                String sanitized = _latinText.getText().stripLeading().replaceAll("\\s+", " ");
+                String morse = encodeASCII((int[]) encodeString.invoke(null, sanitized));
                 _morseText.setText(morse);
             } catch (Exception ex) {
                 // If all tests passed, this shouldn't happen...
@@ -190,21 +183,28 @@ public class MorseUtils {
         _latinText.setEditable(extraCreditDone);
         _latinText.getDocument().addDocumentListener(new LatinTextAreaListener());
         _latinText.setFont(_latinText.getFont().deriveFont(_fontSize));
+        ((AbstractDocument) _latinText.getDocument()).setDocumentFilter(new LatinDocumentFilter());
         _morseText = createTextArea();
         _morseText.setMargin(new Insets(5, 5, 5, 5));
         _morseText.setEditable(true);
         _morseText.getDocument().addDocumentListener(new MorseTextAreaListener());
-        _morseText.setFont(_morseText.getFont().deriveFont(_fontSize));
-        ((AbstractDocument) _morseText.getDocument()).setDocumentFilter(new RegexDocumentFilter("[\\.-\\s/]+"));
+        _morseText.setFont(_morseText.getFont().deriveFont(1.5f * _fontSize));
+        ((AbstractDocument) _morseText.getDocument()).setDocumentFilter(new MorseDocumentFilter());
 
         String startText = ".... . .-.. .-.. --- / .-- --- .-. .-.. -.."; // hello world
         _morseText.setText(startText);
         _morseText.setCaretPosition(startText.length());
+        // JSCrollPane isn't working like this, not sure what's wrong.  SCroll bars appear,
+        // but don't do anything even when the text exceeds the displayable area.
+//        pane.add(new JScrollPane(_morseText, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+//                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS), c);
         pane.add(_morseText, c);
         c.gridy = 1;
-
         pane.add(_latinText, c);
-        c.gridx = 0;
+
+ //       pane.add(new JScrollPane(_latinText, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+   //             JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS), c);
+   c.gridx = 0;
         c.weightx = 0;
         l = new JLabel("Text", SwingConstants.RIGHT);
         l.setFont(l.getFont().deriveFont(_fontSize));
@@ -222,6 +222,7 @@ public class MorseUtils {
         for (int i = 0; i < s.length(); i++) {
             switch (s.charAt(i)) {
                 case '.':
+                    case '∙':
                     l.add(DOT);
                     break;
                 case '-':
@@ -249,7 +250,7 @@ public class MorseUtils {
         for (int c : code) {
             switch (c) {
                 case DOT:
-                    s.append('.');
+                    s.append('∙');
                     break;
                 case DASH:
                     s.append('-');
