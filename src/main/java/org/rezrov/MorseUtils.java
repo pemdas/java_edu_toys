@@ -9,7 +9,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -19,6 +21,10 @@ import javax.swing.SwingConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 public class MorseUtils {
     static final int DASH = 0;
@@ -29,6 +35,7 @@ public class MorseUtils {
     private static Method getCharacterLength = null;
     private static Method decodeOne = null;
     private static Method decodeString = null;
+    private static Method encodeString = null;
 
     static {
         Class<?> lab4Class = null;
@@ -57,7 +64,12 @@ public class MorseUtils {
         } catch (NoSuchMethodException e) {
             // Just leave it as null.
         }
+        try {
+            encodeString = lab4Class.getDeclaredMethod("encodeString", String.class);
 
+        } catch (NoSuchMethodException e) {
+            // Just leave it as null.
+        }
     }
 
     static JFrame _window;
@@ -75,6 +87,27 @@ public class MorseUtils {
                 BorderFactory.createEmptyBorder(_textAreaMargin, _textAreaMargin, _textAreaMargin, _textAreaMargin)));
         return ret;
 
+    }
+
+    private static class RegexDocumentFilter extends DocumentFilter {
+        private String _allowed;
+
+        RegexDocumentFilter(String allowed) {
+            System.out.println("WTTTF");
+            _allowed = allowed;
+        }
+
+        public void insertString(DocumentFilter.FilterBypass fb, int offset, String string, AttributeSet attr) {
+            try {
+                System.out.println("Check " + string);
+                if (Pattern.matches(_allowed, string)) {
+                    System.out.println("OK!");
+                    super.insertString(fb, offset, string, attr);
+                }
+            } catch (BadLocationException huh) {
+                System.out.println("WTF");
+            }
+        }
     }
 
     private static class MorseTextAreaListener
@@ -98,9 +131,39 @@ public class MorseUtils {
 
     }
 
+    private static class LatinTextAreaListener
+            implements DocumentListener {
+
+        public void changedUpdate(DocumentEvent e) {
+        }
+
+        public void removeUpdate(DocumentEvent e) {
+            // delegate.
+            insertUpdate(e);
+        }
+
+        public void insertUpdate(DocumentEvent e) {
+            try {
+                // int cursorLocation = _latinText.getCaretPosition();
+                String s = _latinText.getText().replaceAll("\\s+", " ").replaceAll("[^A-Za-z0-9 ]", "").strip();
+                System.out.println(s + " vs " + _latinText.getText());
+                if (!s.equals(_latinText.getText())) {
+                    System.out.println("Setting to " + s);
+                    _latinText.setText(s);
+                }
+                String morse = encodeASCII((int[]) encodeString.invoke(null, s));
+                System.out.println("Setting morse to " + morse);
+                _morseText.setText(morse);
+            } catch (Exception ex) {
+                // If all tests passed, this shouldn't happen...
+            }
+        }
+
+    }
+
     private static float _fontSize = 18;
 
-    private static void createAndShowGUI() {
+    private static void createAndShowGUI(boolean extraCreditDone) {
         // Create and set up the window.
         _window = new JFrame("Morse Translator Toy");
         _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -124,14 +187,15 @@ public class MorseUtils {
         c.gridx = 1;
         _latinText = createTextArea();
         _latinText.setMargin(new Insets(5, 5, 5, 5));
-        _latinText.setEditable(false);
+        _latinText.setEditable(extraCreditDone);
+        _latinText.getDocument().addDocumentListener(new LatinTextAreaListener());
         _latinText.setFont(_latinText.getFont().deriveFont(_fontSize));
-
         _morseText = createTextArea();
         _morseText.setMargin(new Insets(5, 5, 5, 5));
         _morseText.setEditable(true);
         _morseText.getDocument().addDocumentListener(new MorseTextAreaListener());
         _morseText.setFont(_morseText.getFont().deriveFont(_fontSize));
+        ((AbstractDocument) _morseText.getDocument()).setDocumentFilter(new RegexDocumentFilter("[\\.-\\s/]+"));
 
         String startText = ".... . .-.. .-.. --- / .-- --- .-. .-.. -.."; // hello world
         _morseText.setText(startText);
@@ -184,7 +248,17 @@ public class MorseUtils {
         StringBuilder s = new StringBuilder();
         for (int c : code) {
             switch (c) {
-
+                case DOT:
+                    s.append('.');
+                    break;
+                case DASH:
+                    s.append('-');
+                    break;
+                case LETTERSPACE:
+                    s.append(' ');
+                    break;
+                case WORDSPACE:
+                    s.append(" / ");
             }
         }
         return s.toString();
@@ -238,6 +312,44 @@ public class MorseUtils {
                     "10 9 8 7 6 5 4 3 2 1 LIFTOFF"),
     };
 
+    private static boolean testSingleEncodeString(DecodeStringTestPair p) {
+        int[] actual;
+        try {
+            actual = (int[]) encodeString.invoke(null, p.message);
+        } catch (IllegalAccessException ie) {
+            // Shouldn't happen since we preflight stuff.
+            System.out.println("method is not public, can't test.\n");
+            return false;
+        } catch (InvocationTargetException ie) {
+            System.out.println("encodeString() crashed:\n");
+            ie.getCause().printStackTrace();
+            return false;
+        }
+        int[] expected = decodeASCII(p.code);
+        if (Arrays.equals(expected, actual)) {
+            return true;
+        }
+        System.out.printf("\nencodeString(\"%s\") failure:\n\tExpected: {%s}\n\t  Actual: {%s}\n",
+                p.message, stringifyInputs(expected), stringifyInputs(actual));
+        return false;
+    }
+
+    private static boolean testEncodeString() {
+        // Since this is extra credit, we just don't say anything if it's not
+        // implemented.
+        if (encodeString == null) {
+            return false;
+        }
+        System.out.print("Found extra credit encodeString()...");
+        for (DecodeStringTestPair p : codeStringTestData) {
+            if (!testSingleEncodeString(p)) {
+                return false;
+            }
+        }
+        System.out.println("all tests pass!");
+        return true;
+    }
+
     private static boolean testSingleDecodeString(DecodeStringTestPair p) {
         String actual;
         int[] code = decodeASCII(p.code);
@@ -253,7 +365,7 @@ public class MorseUtils {
             return false;
         }
         if (!p.message.equals(actual)) {
-            System.out.printf("\ndecodeString({%s}) should return '%s' but actually returned '%s'\n",
+            System.out.printf("\ndecodeString({%s}) should return \"%s\" but actually returned \"%s\"\n",
                     stringifyInputs(code), p.message, actual);
             return false;
         }
@@ -436,13 +548,19 @@ public class MorseUtils {
     }
 
     public static void testLab4() {
-        boolean allTestsPassed = true;
-        allTestsPassed = testGetCharacterLength() && allTestsPassed;
-        allTestsPassed = testDecodeOne() && allTestsPassed;
-        allTestsPassed = testDecodeString() && allTestsPassed;
-        if (allTestsPassed) {
+        boolean allBaseTestsPassed = true;
+        allBaseTestsPassed = testGetCharacterLength() && allBaseTestsPassed;
+        allBaseTestsPassed = testDecodeOne() && allBaseTestsPassed;
+        allBaseTestsPassed = testDecodeString() && allBaseTestsPassed;
+        boolean extraCreditPassed = testEncodeString();
+        if (allBaseTestsPassed) {
             System.out.println("Starting toy");
-            createAndShowGUI();
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    createAndShowGUI(extraCreditPassed);
+                }
+            });
+
         } else {
             System.out.println("Not all tests are passing.");
         }
