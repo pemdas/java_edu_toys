@@ -34,7 +34,7 @@ public class MorseUtils {
     static final int WORDSPACE = 3;
 
     private static Method getCharacterLength = null;
-    private static Method decodeOne = null;
+    private static Method decodeCharacter = null;
     private static Method decodeString = null;
     private static Method encodeString = null;
 
@@ -55,7 +55,7 @@ public class MorseUtils {
         }
 
         try {
-            decodeOne = lab4Class.getDeclaredMethod("decodeOne", intArrayClass, int.class, int.class);
+            decodeCharacter = lab4Class.getDeclaredMethod("decodeCharacter", intArrayClass, int.class, int.class);
         } catch (NoSuchMethodException e) {
             // Just leave it as null.
         }
@@ -389,7 +389,7 @@ public class MorseUtils {
         return true;
     }
 
-    private static boolean testSingleDecodeOne(DecodeOneTestPair p) {
+    private static boolean testSingleDecodeCharacter(DecodeCharacterTestPair p) {
 
         int[] code = decodeASCII(p.code);
         int size = 1 + code.length + rng.nextInt(3);
@@ -407,18 +407,18 @@ public class MorseUtils {
         }
         char actual = 0;
         try {
-            actual = (Character) decodeOne.invoke(null, testArray, offset, code.length);
+            actual = (Character) decodeCharacter.invoke(null, testArray, offset, code.length);
         } catch (IllegalAccessException ie) {
             // Shouldn't happen since we preflight stuff.
             System.out.println("method is not public, can't test.\n");
             return false;
         } catch (InvocationTargetException ie) {
-            System.out.println("decodeOne() crashed:\n");
+            System.out.println("decodeCharacter() crashed:\n");
             ie.getCause().printStackTrace();
             return false;
         }
         if (actual != p.letter) {
-            System.out.printf("\ndecodeOne({%s}, %d, %d) should return '%c' but actually returned '%c'\n",
+            System.out.printf("\ndecodeCharacter({%s}, %d, %d) should return '%c' but actually returned '%c'\n",
                     stringifyInputs(testArray), offset, code.length, p.letter, actual);
             return false;
         }
@@ -427,8 +427,8 @@ public class MorseUtils {
 
     private static Random rng = new Random(314);
 
-    private static class DecodeOneTestPair {
-        DecodeOneTestPair(String codeInit, char letterInit) {
+    private static class DecodeCharacterTestPair {
+        DecodeCharacterTestPair(String codeInit, char letterInit) {
             code = codeInit;
             letter = letterInit;
         }
@@ -437,54 +437,54 @@ public class MorseUtils {
         char letter;
     }
 
-    static DecodeOneTestPair[] codeOneTestData = {
-            new DecodeOneTestPair(".", 'E'),
-            new DecodeOneTestPair("-", 'T'),
-            new DecodeOneTestPair("..", 'I'),
-            new DecodeOneTestPair(".-", 'A'),
-            new DecodeOneTestPair("-.", 'N'),
-            new DecodeOneTestPair("--", 'M'),
-            new DecodeOneTestPair("...", 'S'),
-            new DecodeOneTestPair("..-", 'U'),
-            new DecodeOneTestPair(".-.", 'R'),
-            new DecodeOneTestPair(".--", 'W'),
-            new DecodeOneTestPair("-..", 'D'),
-            new DecodeOneTestPair("-.-", 'K'),
-            new DecodeOneTestPair("--.", 'G'),
-            new DecodeOneTestPair("---", 'O'),
-            new DecodeOneTestPair("....", 'H'),
-            new DecodeOneTestPair("...-", 'V'),
-            new DecodeOneTestPair("..-.", 'F'),
-            new DecodeOneTestPair(".-..", 'L'),
-            new DecodeOneTestPair(".--.", 'P'),
-            new DecodeOneTestPair(".---", 'J'),
-            new DecodeOneTestPair("-...", 'B'),
-            new DecodeOneTestPair("-..-", 'X'),
-            new DecodeOneTestPair("-.-.", 'C'),
-            new DecodeOneTestPair("-.--", 'Y'),
-            new DecodeOneTestPair("--..", 'Z'),
-            new DecodeOneTestPair("--.-", 'Q'),
-            new DecodeOneTestPair("-----", '0'),
-            new DecodeOneTestPair(".----", '1'),
-            new DecodeOneTestPair("..---", '2'),
-            new DecodeOneTestPair("...--", '3'),
-            new DecodeOneTestPair("....-", '4'),
-            new DecodeOneTestPair(".....", '5'),
-            new DecodeOneTestPair("-....", '6'),
-            new DecodeOneTestPair("--...", '7'),
-            new DecodeOneTestPair("---..", '8'),
-            new DecodeOneTestPair("----.", '9'),
-            new DecodeOneTestPair(".-.-.", '?')
+    static DecodeCharacterTestPair[] codeOneTestData = {
+            new DecodeCharacterTestPair(".", 'E'),
+            new DecodeCharacterTestPair("-", 'T'),
+            new DecodeCharacterTestPair("..", 'I'),
+            new DecodeCharacterTestPair(".-", 'A'),
+            new DecodeCharacterTestPair("-.", 'N'),
+            new DecodeCharacterTestPair("--", 'M'),
+            new DecodeCharacterTestPair("...", 'S'),
+            new DecodeCharacterTestPair("..-", 'U'),
+            new DecodeCharacterTestPair(".-.", 'R'),
+            new DecodeCharacterTestPair(".--", 'W'),
+            new DecodeCharacterTestPair("-..", 'D'),
+            new DecodeCharacterTestPair("-.-", 'K'),
+            new DecodeCharacterTestPair("--.", 'G'),
+            new DecodeCharacterTestPair("---", 'O'),
+            new DecodeCharacterTestPair("....", 'H'),
+            new DecodeCharacterTestPair("...-", 'V'),
+            new DecodeCharacterTestPair("..-.", 'F'),
+            new DecodeCharacterTestPair(".-..", 'L'),
+            new DecodeCharacterTestPair(".--.", 'P'),
+            new DecodeCharacterTestPair(".---", 'J'),
+            new DecodeCharacterTestPair("-...", 'B'),
+            new DecodeCharacterTestPair("-..-", 'X'),
+            new DecodeCharacterTestPair("-.-.", 'C'),
+            new DecodeCharacterTestPair("-.--", 'Y'),
+            new DecodeCharacterTestPair("--..", 'Z'),
+            new DecodeCharacterTestPair("--.-", 'Q'),
+            new DecodeCharacterTestPair("-----", '0'),
+            new DecodeCharacterTestPair(".----", '1'),
+            new DecodeCharacterTestPair("..---", '2'),
+            new DecodeCharacterTestPair("...--", '3'),
+            new DecodeCharacterTestPair("....-", '4'),
+            new DecodeCharacterTestPair(".....", '5'),
+            new DecodeCharacterTestPair("-....", '6'),
+            new DecodeCharacterTestPair("--...", '7'),
+            new DecodeCharacterTestPair("---..", '8'),
+            new DecodeCharacterTestPair("----.", '9'),
+            new DecodeCharacterTestPair(".-.-.", '?')
     };
 
-    public static boolean testDecodeOne() {
-        System.out.print("Testing decodeOne()...");
-        if (decodeOne == null) {
+    public static boolean testDecodeCharacter() {
+        System.out.print("Testing decodeCharacter()...");
+        if (decodeCharacter == null) {
             System.out.println("not yet implemented");
             return false;
         }
-        for (DecodeOneTestPair t : codeOneTestData) {
-            if (!testSingleDecodeOne(t)) {
+        for (DecodeCharacterTestPair t : codeOneTestData) {
+            if (!testSingleDecodeCharacter(t)) {
                 return false;
             }
         }
@@ -551,7 +551,7 @@ public class MorseUtils {
     public static void testLab4() {
         boolean allBaseTestsPassed = true;
         allBaseTestsPassed = testGetCharacterLength() && allBaseTestsPassed;
-        allBaseTestsPassed = testDecodeOne() && allBaseTestsPassed;
+        allBaseTestsPassed = testDecodeCharacter() && allBaseTestsPassed;
         allBaseTestsPassed = testDecodeString() && allBaseTestsPassed;
         boolean extraCreditPassed = testEncodeString();
         if (allBaseTestsPassed) {
