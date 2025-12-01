@@ -532,11 +532,11 @@ public class MorseUtils {
     }
 
     public static boolean testGetCharacterLength() {
+        System.out.print("Testing getCharacterLength()...");
         if (getCharacterLength == null) {
-            System.out.println("getCharacterLength() not yet implemented");
+            System.out.println("not yet implemented");
             return false;
         }
-        System.out.print("Testing getCharacterLength()...");
 
         for (int i = 0; i < 100; i++) {
             if (!testRandomGetCharacterLength()) {
