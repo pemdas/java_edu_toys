@@ -11,8 +11,8 @@
    </parent>
 
    <groupId>edu.cascadia</groupId>
-   <artifactId>game-window</artifactId>
-   <version>1.0</version>
+   <artifactId>GameWindow</artifactId>
+   <version>0.2</version>
 
    <name>GameWindow Library</name>
 </project>
