@@ -124,20 +124,28 @@ public class GameWindow {
     * All queued sprites are rendered together on the next call to nextFrame().
     */
    public void addSprite(double x, double y, BufferedImage sprite) {
-      addSprite(x, y, sprite, 0.0);
+      addSprite(x, y, new AffineTransform(), sprite);
+   }
+
+   public void addSprite(double x, double y, BufferedImage sprite, double rotationDegrees) {
+      // AffineTransform.getRotateInstance
+      addSprite(x, y, AffineTransform.getRotateInstance(Math.toRadians(rotationDegrees)), sprite);
    }
 
    /**
-    * Queue a sprite to be drawn centered at pixel position (x, y) and rotated.
-    * The origin (0, 0) is the top-left corner of the window; positive x is
-    * right and positive y is down (standard screen coordinates).
-    * All queued sprites are displayed together on the next call to nextFrame().
-    *
-    * @param degrees The rotation of the sprite in degrees, clockwise.
+    * 
+    * Queue a sprite to be drawn. The sprite is centered at (x, y), but transform
+    * is applied to the translated position.
+    * before rendering.
     */
-   public void addSprite(double x, double y, BufferedImage sprite, double degrees) {
+   public void addSprite(double x, double y, AffineTransform transform, BufferedImage sprite) {
       synchronized (_sprites) {
-         _sprites.add(new SpriteEntry(x, y, sprite, degrees));
+         AffineTransform finalTransform = AffineTransform.getTranslateInstance(x, y);
+         finalTransform.concatenate(transform);
+         finalTransform.translate(-sprite.getWidth() / 2.0, -sprite.getHeight() / 2.0);
+         // finalTransform.concatenate(transform);
+         // finalTransform.translate(x, y);
+         _sprites.add(new SpriteEntry(sprite, finalTransform));
       }
    }
 
@@ -274,14 +282,12 @@ public class GameWindow {
    // -------------------------------------------------------------------------
 
    private static class SpriteEntry {
-      final double x, y, rotation;
+      final AffineTransform transform;
       final BufferedImage image;
 
-      SpriteEntry(double x, double y, BufferedImage image, double rotation) {
-         this.x = x;
-         this.y = y;
+      SpriteEntry(BufferedImage image, AffineTransform transform) {
          this.image = image;
-         this.rotation = rotation;
+         this.transform = transform;
       }
    }
 
@@ -300,13 +306,7 @@ public class GameWindow {
          g.fillRect(0, 0, getWidth(), getHeight());
 
          for (SpriteEntry e : _lastRenderedSprites) {
-            AffineTransform old = g.getTransform();
-            g.translate(e.x, e.y);
-            if (e.rotation != 0.0) {
-               g.rotate(Math.toRadians(e.rotation));
-            }
-            g.drawImage(e.image, -e.image.getWidth() / 2, -e.image.getHeight() / 2, null);
-            g.setTransform(old);
+            g.drawImage(e.image, e.transform, null);
          }
       }
    }
