@@ -46,6 +46,11 @@ public class GameWindow {
    public static final BufferedImage FLAME3 = loadResource("flame3.png");
    public static final BufferedImage FLAME4 = loadResource("flame4.png");
 
+   public static final BufferedImage PLANET = loadResource("earth_100px.png");
+   public static final BufferedImage BLACK_HOLE = loadResource("black_hole_100px.png");
+   public static final BufferedImage ASTEROID = loadResource("asteroid.png");
+   public static final BufferedImage SATELLITE = loadResource("satellite.png");
+
    // -------------------------------------------------------------------------
    // Factory for custom sprites
    // -------------------------------------------------------------------------
