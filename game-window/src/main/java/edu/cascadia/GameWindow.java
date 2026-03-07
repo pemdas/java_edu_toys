@@ -4,10 +4,17 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.MouseInfo;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -204,6 +211,36 @@ public class GameWindow {
       }
    }
 
+   /**
+    * Return the mouse position in window coordinates, relative to the top-left
+    * corner of the canvas. Works even when the cursor is outside the window.
+    * Positive x is right, positive y is down.
+    */
+   public Point2D.Double mousePosition() {
+      Point screen = MouseInfo.getPointerInfo().getLocation();
+      SwingUtilities.convertPointFromScreen(screen, _canvas);
+      return new Point2D.Double(screen.x, screen.y);
+   }
+
+   /** Return true if the left mouse button is currently held down. */
+   public boolean isLeftMouseButtonDown() {
+      synchronized (_pressedMouseButtons) {
+         return _pressedMouseButtons.contains(MouseEvent.BUTTON1);
+      }
+   }
+
+   /** Return true if the right mouse button is currently held down. */
+   public boolean isRightMouseButtonDown() {
+      synchronized (_pressedMouseButtons) {
+         return _pressedMouseButtons.contains(MouseEvent.BUTTON3);
+      }
+   }
+
+   /** Return true if the game window currently has keyboard/input focus. */
+   public boolean isWindowFocused() {
+      return _windowFocused;
+   }
+
    public void dispose() {
       _window.dispose();
    }
@@ -230,6 +267,11 @@ public class GameWindow {
       _window.pack();
       _window.setMinimumSize(_window.getSize());
       _window.addKeyListener(new KeyHandler());
+      _canvas.addMouseListener(new MouseHandler());
+      _window.addWindowFocusListener(new WindowAdapter() {
+         @Override public void windowGainedFocus(WindowEvent e) { _windowFocused = true; }
+         @Override public void windowLostFocus(WindowEvent e)   { _windowFocused = false; }
+      });
       _window.setVisible(true);
       _window.setResizable(false);
    }
@@ -276,6 +318,8 @@ public class GameWindow {
    private final List<SpriteEntry> _sprites = new ArrayList<>();
    private volatile List<SpriteEntry> _lastRenderedSprites = Collections.emptyList();
    private final Set<String> _pressedKeys = new HashSet<>();
+   private final Set<Integer> _pressedMouseButtons = new HashSet<>();
+   private volatile boolean _windowFocused = false;
 
    // -------------------------------------------------------------------------
    // Private nested classes
@@ -307,6 +351,22 @@ public class GameWindow {
 
          for (SpriteEntry e : _lastRenderedSprites) {
             g.drawImage(e.image, e.transform, null);
+         }
+      }
+   }
+
+   private class MouseHandler extends MouseAdapter {
+      @Override
+      public void mousePressed(MouseEvent e) {
+         synchronized (_pressedMouseButtons) {
+            _pressedMouseButtons.add(e.getButton());
+         }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+         synchronized (_pressedMouseButtons) {
+            _pressedMouseButtons.remove(e.getButton());
          }
       }
    }
