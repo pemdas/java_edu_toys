@@ -146,13 +146,13 @@ public class GameWindow {
     * before rendering.
     */
    public void addSprite(double x, double y, AffineTransform transform, BufferedImage sprite) {
-      synchronized (_sprites) {
+      synchronized (_drawQueue) {
          AffineTransform finalTransform = AffineTransform.getTranslateInstance(x, y);
          finalTransform.concatenate(transform);
          finalTransform.translate(-sprite.getWidth() / 2.0, -sprite.getHeight() / 2.0);
          // finalTransform.concatenate(transform);
          // finalTransform.translate(x, y);
-         _sprites.add(new SpriteEntry(sprite, finalTransform));
+         _drawQueue.add(new SpriteEntry(sprite, finalTransform));
       }
    }
 
@@ -162,12 +162,12 @@ public class GameWindow {
     * Call once per game-loop iteration.
     */
    public void nextFrame() {
-      // Snapshot the sprite list into _lastRenderedSprites and clear the working
-      // list. paintComponent always reads from _lastRenderedSprites, so any
+      // Snapshot the sprite list into _lastRenderedCommands and clear the working
+      // list. paintComponent always reads from _lastRenderedCommands, so any
       // Swing-initiated repaint (now or later) re-draws this frame correctly.
-      synchronized (_sprites) {
-         _lastRenderedSprites = new ArrayList<>(_sprites);
-         _sprites.clear();
+      synchronized (_drawQueue) {
+         _lastRenderedCommands = new ArrayList<>(_drawQueue);
+         _drawQueue.clear();
       }
 
       try {
@@ -253,6 +253,16 @@ public class GameWindow {
    public void setBackgroundColor(Color color) {
       _backgroundColor = color;
    }
+
+   /**
+    * Add a filled circle to the current frame's draw queue, centered at (x, y).
+    * The circle is drawn in the given color with the specified radius in pixels.
+    */
+   public void addCircle(double x, double y, double radius, Color color) {
+      synchronized (_drawQueue) {
+         _drawQueue.add(new CircleEntry(x, y, radius, color));
+      }
+   }
    // -------------------------------------------------------------------------
    // Private: GUI construction
    // -------------------------------------------------------------------------
@@ -315,8 +325,8 @@ public class GameWindow {
    private long _lastFrameNs;
    private volatile Color _backgroundColor = Color.BLACK;
 
-   private final List<SpriteEntry> _sprites = new ArrayList<>();
-   private volatile List<SpriteEntry> _lastRenderedSprites = Collections.emptyList();
+   private final List<DrawCommand> _drawQueue = new ArrayList<>();
+   private volatile List<DrawCommand> _lastRenderedCommands = Collections.emptyList();
    private final Set<String> _pressedKeys = new HashSet<>();
    private final Set<Integer> _pressedMouseButtons = new HashSet<>();
    private volatile boolean _windowFocused = false;
@@ -325,13 +335,41 @@ public class GameWindow {
    // Private nested classes
    // -------------------------------------------------------------------------
 
-   private static class SpriteEntry {
+   private interface DrawCommand {
+      void draw(Graphics2D g);
+   }
+
+   private static class SpriteEntry implements DrawCommand {
       final AffineTransform transform;
       final BufferedImage image;
 
       SpriteEntry(BufferedImage image, AffineTransform transform) {
          this.image = image;
          this.transform = transform;
+      }
+
+      @Override
+      public void draw(Graphics2D g) {
+         g.drawImage(image, transform, null);
+      }
+   }
+
+   private static class CircleEntry implements DrawCommand {
+      final double x, y, radius;
+      final Color color;
+
+      CircleEntry(double x, double y, double radius, Color color) {
+         this.x = x;
+         this.y = y;
+         this.radius = radius;
+         this.color = color;
+      }
+
+      @Override
+      public void draw(Graphics2D g) {
+         g.setColor(color);
+         g.fillOval((int) (x - radius), (int) (y - radius),
+               (int) (2 * radius), (int) (2 * radius));
       }
    }
 
@@ -349,8 +387,8 @@ public class GameWindow {
          g.setColor(_backgroundColor);
          g.fillRect(0, 0, getWidth(), getHeight());
 
-         for (SpriteEntry e : _lastRenderedSprites) {
-            g.drawImage(e.image, e.transform, null);
+         for (DrawCommand cmd : _lastRenderedCommands) {
+            cmd.draw(g);
          }
       }
    }
