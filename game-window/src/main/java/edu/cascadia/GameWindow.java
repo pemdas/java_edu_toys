@@ -35,10 +35,6 @@ import javax.swing.SwingUtilities;
 
 public class GameWindow {
 
-   // -------------------------------------------------------------------------
-   // Public sprite type
-   // -------------------------------------------------------------------------
-
    private static final Map<String, BufferedImage> _imageCache = new HashMap<>();
 
    // -------------------------------------------------------------------------
@@ -96,10 +92,13 @@ public class GameWindow {
    // -------------------------------------------------------------------------
 
    /**
-    * Create and display the game window.
+    * Create and display the game window. The window is visible immediately after
+    * this constructor returns.
     *
-    * @param width  width of the game window in pixels
-    * @param height height of the game window in pixels
+    * @param windowTitle title shown in the window's title bar
+    * @param width       width of the canvas in pixels; must be in [200, 2000]
+    * @param height      height of the canvas in pixels; must be in [200, 2000]
+    * @throws IllegalArgumentException if width or height is outside [200, 2000]
     */
    public GameWindow(String windowTitle, double width, double height) {
       if (width < 200 || width > 2000 || height < 200 || height > 2000) {
@@ -134,16 +133,18 @@ public class GameWindow {
       addSprite(x, y, new AffineTransform(), sprite);
    }
 
+   /**
+    * Add a sprite to the current frame's draw queue, centered at (x, y) and
+    * rotated by the given number of degrees clockwise.
+    */
    public void addSprite(double x, double y, BufferedImage sprite, double rotationDegrees) {
       // AffineTransform.getRotateInstance
       addSprite(x, y, AffineTransform.getRotateInstance(Math.toRadians(rotationDegrees)), sprite);
    }
 
    /**
-    * 
-    * Queue a sprite to be drawn. The sprite is centered at (x, y), but transform
-    * is applied to the translated position.
-    * before rendering.
+    * Add a sprite to the current frame's draw queue, centered at (x, y) with an
+    * arbitrary affine transform (e.g. rotation + scale) applied around that center.
     */
    public void addSprite(double x, double y, AffineTransform transform, BufferedImage sprite) {
       synchronized (_drawQueue) {
@@ -157,8 +158,8 @@ public class GameWindow {
    }
 
    /**
-    * Display all sprites queued since the last call, sleep to maintain ~60 fps,
-    * then clear the sprite list for the next frame.
+    * Render everything queued since the last call, sleep to maintain ~60 fps,
+    * then clear the draw queue for the next frame.
     * Call once per game-loop iteration.
     */
    public void nextFrame() {
@@ -194,7 +195,7 @@ public class GameWindow {
     * Does not block; call each frame to check the current keyboard state.
     *
     * Valid key names: "left", "right", "up", "down", "space", "shift",
-    * "control", "alt", and single letters "a" through "z".
+    * "control", "alt", single letters "a" through "z", and digits "0" through "9".
     *
     * Example: window.isKeyDown("right")
     *
@@ -241,6 +242,7 @@ public class GameWindow {
       return _windowFocused;
    }
 
+   /** Close and release the game window. */
    public void dispose() {
       _window.dispose();
    }
