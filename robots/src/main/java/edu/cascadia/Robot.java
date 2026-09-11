@@ -13,6 +13,14 @@ public class Robot {
       assert world.isInBounds(position);
    }
 
+   public Coord2D getPosition() {
+      return new Coord2D(position);
+   }
+
+   public Direction getDirection() {
+      return direction;
+   }
+
    /** Turn left 90 degrees */
    public void turnLeft() {
       direction = direction.left();
