@@ -5,6 +5,21 @@ public class Coord2D
    public int x;
    public int y;
 
+   public Coord2D(int x, int y) {
+      this.x = x;
+      this.y = y;
+   }
+
+   public Coord2D() {
+      this.x = 0;
+      this.y = 0;
+   }
+
+   public Coord2D(Coord2D other) {
+      this.x = other.x;
+      this.y = other.y;
+   }
+
    @Override
    public int hashCode() {
       return Long.hashCode(((long) x << 32) | y);
@@ -22,6 +37,11 @@ public class Coord2D
       } else {
          return Integer.compare(y, other.y);
       }
+   }
+
+   @Override
+   public String toString() {
+      return "Coord (" + x + ", " + y + ")";
    }
 
 }
