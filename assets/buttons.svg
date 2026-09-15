@@ -7,9 +7,9 @@
    viewBox="0 0 100 100"
    version="1.1"
    id="svg5"
-   inkscape:export-filename="pause_button.png"
-   inkscape:export-xdpi="15.24"
-   inkscape:export-ydpi="15.24"
+   inkscape:export-filename="../robots/src/main/resources/edu/cascadia/play_button.png"
+   inkscape:export-xdpi="10.16"
+   inkscape:export-ydpi="10.16"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    sodipodi:docname="buttons.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -28,11 +28,11 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.3944516"
-     inkscape:cx="213.34552"
-     inkscape:cy="160.99519"
-     inkscape:window-width="2494"
-     inkscape:window-height="1371"
-     inkscape:window-x="1986"
+     inkscape:cx="215.4969"
+     inkscape:cy="164.58083"
+     inkscape:window-width="1854"
+     inkscape:window-height="1011"
+     inkscape:window-x="66"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer2" />
@@ -42,7 +42,7 @@
      inkscape:label="Play"
      inkscape:groupmode="layer"
      id="layer1"
-     style="display:none">
+     style="display:inline">
     <path
        sodipodi:type="star"
        style="fill:#24408e;fill-opacity:1;stroke-width:3.06001;stroke-linecap:round;stroke-linejoin:round"
@@ -65,7 +65,7 @@
      inkscape:groupmode="layer"
      id="layer2"
      inkscape:label="Pause"
-     style="display:inline">
+     style="display:none">
     <g
        id="g1195"
        transform="matrix(1.1510763,0,0,1.1335425,1.8184801,-3.5498533)">
