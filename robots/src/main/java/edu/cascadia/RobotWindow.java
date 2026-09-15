@@ -11,7 +11,9 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,8 +71,12 @@ public class RobotWindow extends JFrame {
 
    }
 
-   final static float BORDER_WIDTH_PX = 10;
-   final static float WALL_WIDTH_PX = 1;
+   final static int MARGIN_PX = 10;
+
+   // This is in terms of the width of 1 cell.
+   final static float WALL_WIDTH = .07f;
+   final static float HALF_WALL_WIDTH = WALL_WIDTH / 2;
+
    final static Color WALL_COLOR = Color.RED;
 
    private void paintRobotPanel(Graphics2D g) {
@@ -80,39 +86,87 @@ public class RobotWindow extends JFrame {
             RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON));
 
-      // Set up the graphics origin, and determine the cell size, in pixels.
+      g.setColor(new Color(110, 168, 254));
 
-      // Reduce the effective size of the paint panel by the wall width so there's
-      // room for half a wall on each edge.
-      float pW = paintPanel.getWidth() - WALL_WIDTH_PX;
-      float pH = paintPanel.getHeight() - WALL_WIDTH_PX;
-      int wW = world.getWidth();
-      int wH = world.getHeight();
+      g.fillRect(0, 0, paintPanel.getWidth(), paintPanel.getHeight());
+
+      float pW = paintPanel.getWidth() - 2 * MARGIN_PX;
+      float pH = paintPanel.getHeight() - 2 * MARGIN_PX;
+
+      // These are the world rendering area, including space for the walls around the
+      // outside edges (1/2 wall on each side).
+      float wW = world.getWidth() + WALL_WIDTH;
+      float wH = world.getHeight() + WALL_WIDTH;
 
       float cellSize;
-      if ((wW / (double) wH) > (pW / (double) pH)) {
+      if ((wW / wH) > (pW / pH)) {
          // The world is wider than the panel.
          cellSize = pW / wW;
-         g.translate(0, (pH - cellSize * wH) / 2.0);
+         g.translate(MARGIN_PX,
+               MARGIN_PX + (pH - cellSize * wH) / 2.0);
       } else {
          // The world is taller than the panel.
          cellSize = pH / wH;
-         g.translate((pW - cellSize * wW) / 2.0, 0);
+         g.translate(MARGIN_PX + (pW - cellSize * wW) / 2.0,
+               MARGIN_PX);
       }
+      // Adjust for walls
+      g.scale(cellSize, cellSize);
       g.setColor(Color.WHITE);
-      g.fillRect(0, 0, 100, 100);
 
-      g.setColor(Color.RED);
-      g.setStroke(new BasicStroke(WALL_WIDTH_PX));
-      for (int i = 0; i <= wW; i++) {
-         g.draw(new Line2D.Float(WALL_WIDTH_PX / 2 + i * cellSize, WALL_WIDTH_PX / 2, WALL_WIDTH_PX / 2 + i * cellSize,
-               wH * cellSize));
+      g.fill(new Rectangle2D.Float(0, 0, wW, wH));
+      g.translate(HALF_WALL_WIDTH, HALF_WALL_WIDTH);
+      // Set up the transform so each cell is 1 unit wide.
+
+      g.setColor(Color.BLACK);
+      g.setStroke(new BasicStroke(WALL_WIDTH));
+      // Draw the outer walls.
+      g.draw(new Line2D.Float(0, 0, world.getWidth(), 0)); // Top
+      g.draw(new Line2D.Float(0, world.getHeight(), world.getWidth(), world.getHeight())); // Bottom
+      g.draw(new Line2D.Float(0, 0, 0, world.getHeight())); // Left
+      g.draw(new Line2D.Float(world.getWidth(), 0, world.getWidth(), world.getHeight())); // Right
+
+      // g.setStroke(new BasicStroke(WALL_WIDTH, BasicStroke.CAP_ROUND,
+      // BasicStroke.JOIN_BEVEL));
+      // Draw top walls
+      for (int x = 0; x < world.getWidth(); x++) {
+         for (int y = 1; y < world.getHeight(); y++) {
+            if (world.isFacingWall(new Coord2D(x, y), Direction.UP)) {
+               g.draw(new Line2D.Float(x, y, x + 1, y));
+            }
+         }
       }
-      for (int i = 0; i <= wH; i++) {
-         g.draw(new Line2D.Float(WALL_WIDTH_PX / 2, WALL_WIDTH_PX / 2 + i * cellSize, cellSize * wW,
-               WALL_WIDTH_PX / 2 + i * cellSize));
+      // Draw left walls
+      for (int x = 1; x < world.getWidth(); x++) {
+         for (int y = 0; y < world.getHeight(); y++) {
+            if (world.isFacingWall(new Coord2D(x, y), Direction.LEFT)) {
+               g.draw(new Line2D.Float(x, y, x, y + 1));
+            }
+         }
       }
+      // Draw "pillars"
+      for (int x = 1; x < world.getWidth(); x++) {
+         for (int y = 1; y < world.getHeight(); y++) {
+            g.fill(new Ellipse2D.Float(x - WALL_WIDTH, y - WALL_WIDTH, 2 * WALL_WIDTH, 2 * WALL_WIDTH));
+         }
+      }
+
+      /*
+       * g.setColor(Color.RED);
+       * g.setStroke(new BasicStroke(WALL_WIDTH_PX));
+       * for (int i = 0; i <= wW; i++) {
+       * g.draw(new Line2D.Float(WALL_WIDTH_PX / 2 + i * cellSize, WALL_WIDTH_PX / 2,
+       * WALL_WIDTH_PX / 2 + i * cellSize,
+       * wH * cellSize));
+       * }
+       * for (int i = 0; i <= wH; i++) {
+       * g.draw(new Line2D.Float(WALL_WIDTH_PX / 2, WALL_WIDTH_PX / 2 + i * cellSize,
+       * cellSize * wW,
+       * WALL_WIDTH_PX / 2 + i * cellSize));
+       * }
+       */
       g.setTransform(saved);
+
    }
 
    private static BufferedImage loadResource(String name) {
@@ -140,6 +194,7 @@ public class RobotWindow extends JFrame {
    public static void main(String[] args) {
       World w = new World(3, 4);
       w.addWall(new Coord2D(0, 0), Direction.RIGHT);
+      w.addWall(new Coord2D(1, 1), Direction.DOWN);
       new RobotWindow("Robot Land", w).setVisible(true);
 
    }
