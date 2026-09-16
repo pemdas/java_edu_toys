@@ -49,7 +49,8 @@ public class WorldPanel extends JPanel {
 
    @Override
    public void paintComponent(Graphics gr) {
-
+      // long start = System.nanoTime();
+      // System.out.println("Repaint");
       // Shouldn't happen, but be paranoid.
       if (getWidth() == 0 || getHeight() == 0) {
          return;
@@ -90,6 +91,8 @@ public class WorldPanel extends JPanel {
       Pose2D robotPose = robot.getPose();
       drawSprite(g, Resources.ROBOT_SPRITE, .6, robotPose.x, robotPose.y, robotPose.heading);
       g.setTransform(savedTransform);
+      // System.out.println("Paint took " + (System.nanoTime() - start) /
+      // 1_000_000_000.0 + " seconds");
    }
 
    // Draw the given sprite to g. g should be set up with the world transform

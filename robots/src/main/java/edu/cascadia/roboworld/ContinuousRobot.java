@@ -25,7 +25,7 @@ public class ContinuousRobot implements Robot {
       notify();
    }
 
-   public Pose2D getPose() {
+   synchronized public Pose2D getPose() {
       return new Pose2D(pose);
    }
 

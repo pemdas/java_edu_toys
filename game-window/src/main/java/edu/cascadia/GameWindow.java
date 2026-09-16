@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -144,7 +145,8 @@ public class GameWindow {
 
    /**
     * Add a sprite to the current frame's draw queue, centered at (x, y) with an
-    * arbitrary affine transform (e.g. rotation + scale) applied around that center.
+    * arbitrary affine transform (e.g. rotation + scale) applied around that
+    * center.
     */
    public void addSprite(double x, double y, AffineTransform transform, BufferedImage sprite) {
       synchronized (_drawQueue) {
@@ -172,7 +174,10 @@ public class GameWindow {
       }
 
       try {
-         SwingUtilities.invokeAndWait(() -> _canvas.paintImmediately(0, 0, _canvas.getWidth(), _canvas.getHeight()));
+         SwingUtilities.invokeAndWait(() -> {
+            _canvas.paintImmediately(0, 0, _canvas.getWidth(), _canvas.getHeight());
+            Toolkit.getDefaultToolkit().sync();
+         });
       } catch (Exception ignored) {
       }
 
@@ -281,8 +286,15 @@ public class GameWindow {
       _window.addKeyListener(new KeyHandler());
       _canvas.addMouseListener(new MouseHandler());
       _window.addWindowFocusListener(new WindowAdapter() {
-         @Override public void windowGainedFocus(WindowEvent e) { _windowFocused = true; }
-         @Override public void windowLostFocus(WindowEvent e)   { _windowFocused = false; }
+         @Override
+         public void windowGainedFocus(WindowEvent e) {
+            _windowFocused = true;
+         }
+
+         @Override
+         public void windowLostFocus(WindowEvent e) {
+            _windowFocused = false;
+         }
       });
       _window.setVisible(true);
       _window.setResizable(false);

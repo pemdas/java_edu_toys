@@ -60,7 +60,7 @@ public class Environment {
     * The parser trims whitespace at the start and end of lines, as well as any whitespace at the start or end of input.
     */
 
-   static class MapParseException extends Exception {
+   static class MapParseException extends RuntimeException {
       public MapParseException(String msg) {
          super(msg);
       }
@@ -86,6 +86,7 @@ public class Environment {
             }
          }
       }
+
       for (int y = 0; y < height - 1; y++) {
          String line = lines[2 * y + 2];
          for (int x = 0; x < width; x++) {

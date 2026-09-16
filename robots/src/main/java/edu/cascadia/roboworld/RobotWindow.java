@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -14,14 +17,25 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-
-import edu.cascadia.roboworld.Environment.MapParseException;
+import javax.swing.Timer;
 
 public class RobotWindow extends JFrame {
+   private final static int TARGET_FPS = 30;
+
    private JPanel paintPanel;
 
-   public RobotWindow(String title, Environment env, ContinuousRobot robot) {
+   // The application (not swing) thread.
+   private Thread appThread;
+
+   private javax.swing.Timer timer;
+   private ContinuousRobot robot;
+   long lastTimerNanos;
+
+   public RobotWindow(String title, Thread appThread, Environment env, ContinuousRobot robot) {
       super(title);
+      this.appThread = appThread;
+      this.robot = robot;
+      System.out.println("App thread id is " + appThread.getId());
       setMinimumSize(new Dimension(400, 400));
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       paintPanel = new WorldPanel(env, robot, Color.CYAN);
@@ -47,34 +61,61 @@ public class RobotWindow extends JFrame {
 
       // display it
       pack();
+      setVisible(true);
+      timer = new Timer(Math.round(1000.0f / TARGET_FPS), new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            timerFired();
+         }
+      });
+      lastTimerNanos = System.nanoTime();
+      timer.start();
 
+   }
+
+   public void timerFired() {
+      if (!appThread.isAlive()) {
+         // TODO - Check goal states.
+         System.out.println("App thread exited");
+         timer.stop();
+      } else {
+         long now = System.nanoTime();
+         double elapsed = (now - lastTimerNanos) / 1_000_000_000.0;
+         lastTimerNanos = now;
+         // System.out.println("Running " + elapsed + " seconds");
+         robot.run(elapsed);
+         paintPanel.paintImmediately(0, 0, paintPanel.getWidth(), paintPanel.getHeight());
+         Toolkit.getDefaultToolkit().sync();
+      }
    }
 
    final static int MARGIN_PX = 10;
 
-   public static void main(String[] args) {
-      System.out.println("Main thread is " + Thread.currentThread().getId());
-      Environment e;
-      try {
-         e = new Environment(
-
-               "" +
-                     "+-+-+-+\n" +
-                     "|     |\n" +
-                     "+ + + +\n" +
-                     "|     |\n" +
-                     "+ + + +\n" +
-                     "| | | |\n" +
-                     "+ +-+ +\n" +
-                     "|     |\n" +
-                     "+-+-+-+\n");
-      } catch (MapParseException ex) {
-         throw new Error(ex);
-      }
-      // Environment e = new Environment(3, 4);
-      // e.addWall(new Coord2D(0, 0), Direction.RIGHT);
-      // e.addWall(new Coord2D(1, 1), Direction.DOWN);
-      new RobotWindow("Robot Land", e, new ContinuousRobot(e, new Pose2D(1, 2, Direction.LEFT))).setVisible(true);
-
-   }
+   /*
+    * public static void main(String[] args) {
+    * System.out.println("Main thread is " + Thread.currentThread().getId());
+    * Environment e;
+    * try {
+    * e = new Environment(
+    * 
+    * "" +
+    * "+-+-+-+\n" +
+    * "|     |\n" +
+    * "+ + + +\n" +
+    * "|     |\n" +
+    * "+ + + +\n" +
+    * "| | | |\n" +
+    * "+ +-+ +\n" +
+    * "|     |\n" +
+    * "+-+-+-+\n");
+    * } catch (MapParseException ex) {
+    * throw new Error(ex);
+    * }
+    * // Environment e = new Environment(3, 4);
+    * // e.addWall(new Coord2D(0, 0), Direction.RIGHT);
+    * // e.addWall(new Coord2D(1, 1), Direction.DOWN);
+    * new RobotWindow("Robot Land", e, new ContinuousRobot(e, new Pose2D(1, 2,
+    * Direction.LEFT))).setVisible(true);
+    * 
+    * }
+    */
 }
