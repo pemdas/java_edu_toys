@@ -86,14 +86,8 @@ public class MapPanel extends JPanel {
       }
       g.drawRenderedImage(cachedBackgroundImage, IDENTITY_TRANSFORM);
       g.transform(cachedTransform);
-      /*
-       * g.setColor(Color.RED);
-       * g.setStroke(new BasicStroke(HALF_WALL_WIDTH));
-       * g.draw(new Line2D.Float(1, 1, 2, 2));
-       * g.draw(new Line2D.Float(1, 2, 2, 1));
-       */
       Pose2D robotPose = robot.getPose();
-      drawSprite(g, Resources.ROBOT_SPRITE, .6, robotPose.x + .5, robotPose.y + .5, robotPose.heading);
+      drawSprite(g, Resources.ROBOT_SPRITE, .6, robotPose.x, robotPose.y, robotPose.heading);
       g.setTransform(savedTransform);
    }
 
@@ -148,10 +142,6 @@ public class MapPanel extends JPanel {
             RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON));
 
-      // g.setColor(new Color(110, 168, 254));
-
-      // g.fillRect(0, 0, w, h);
-
       // Due to the canvas area being rounded to the nearest pixel, the cell size may
       // not be precisely the same in the
       // horizontal and vertical directions, but it should be close enough that any
@@ -159,10 +149,8 @@ public class MapPanel extends JPanel {
       float hCellSize = (float) (wPx / (world.getWidth() + WALL_WIDTH));
       float vCellSize = (float) (hPx / (world.getHeight() + WALL_WIDTH));
 
-      cachedTransform = new AffineTransform();
-      cachedTransform.scale(hCellSize, vCellSize);
-      cachedTransform.translate(HALF_WALL_WIDTH, HALF_WALL_WIDTH);
-      g.transform(cachedTransform);
+      g.scale(hCellSize, vCellSize);
+      g.translate(HALF_WALL_WIDTH, HALF_WALL_WIDTH);
 
       g.setColor(WALL_COLOR);
       g.setStroke(new BasicStroke(WALL_WIDTH));
@@ -194,5 +182,9 @@ public class MapPanel extends JPanel {
             g.fill(new Ellipse2D.Float(x - WALL_WIDTH, y - WALL_WIDTH, 2 * WALL_WIDTH, 2 * WALL_WIDTH));
          }
       }
+      // For other rendering, the coordinate system has integer coordinates *centered*
+      // in those cells.
+      g.translate(.5f, .5f);
+      cachedTransform = g.getTransform();
    }
 }
