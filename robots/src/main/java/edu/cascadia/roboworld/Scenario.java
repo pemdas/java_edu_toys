@@ -31,6 +31,11 @@ public class Scenario {
    private Environment env;
    private ContinuousRobot robot;
 
+   private String description;
+
+   // (Make goal validation a callback? Makes scenarios impossible to create
+   // declaratively, but adds the most flexibility...)
+
    public Scenario(Environment env, ContinuousRobot r) {
       this.env = env;
       this.robot = r;

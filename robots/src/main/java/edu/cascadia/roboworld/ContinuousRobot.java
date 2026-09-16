@@ -1,5 +1,7 @@
 package edu.cascadia.roboworld;
 
+import java.util.HashSet;
+
 public class ContinuousRobot implements Robot {
    private Environment env;
    private Pose2D pose;
@@ -45,7 +47,14 @@ public class ContinuousRobot implements Robot {
    }
 
    /** Turn left 90 degrees */
+   private HashSet<StackTraceElement> turnLeftCallSites = new HashSet<>();
+
+   public int numTurnLeftCallSites() {
+      return turnLeftCallSites.size();
+   }
+
    public void turnLeft() {
+      turnLeftCallSites.add(Thread.currentThread().getStackTrace()[2]);
       assert targetPose == null;
       if (!isCrashed) {
          targetPose = new Pose2D(pose.cellX(), pose.cellY(), pose.direction().left());

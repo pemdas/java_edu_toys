@@ -22,7 +22,7 @@ import javax.swing.Timer;
 public class RobotWindow extends JFrame {
    private final static int TARGET_FPS = 30;
 
-   private JPanel paintPanel;
+   private JPanel worldPanel;
 
    // The application (not swing) thread.
    private Thread appThread;
@@ -38,8 +38,8 @@ public class RobotWindow extends JFrame {
       System.out.println("App thread id is " + appThread.getId());
       setMinimumSize(new Dimension(400, 400));
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      paintPanel = new WorldPanel(env, robot, Color.CYAN);
-      getContentPane().add(paintPanel, BorderLayout.CENTER);
+      worldPanel = new WorldPanel(env, robot, Color.CYAN);
+      getContentPane().add(worldPanel, BorderLayout.CENTER);
       JPanel bottomPanel = new JPanel();
       ImageIcon playIcon = new ImageIcon(Resources.loadImage("play_button.png"));
 
@@ -76,46 +76,19 @@ public class RobotWindow extends JFrame {
       if (!appThread.isAlive()) {
          // TODO - Check goal states.
          System.out.println("App thread exited");
+         System.out.println(robot.numTurnLeftCallSites() + " turn left callsites");
          timer.stop();
       } else {
          long now = System.nanoTime();
          double elapsed = (now - lastTimerNanos) / 1_000_000_000.0;
          lastTimerNanos = now;
          // System.out.println("Running " + elapsed + " seconds");
-         robot.run(elapsed);
-         paintPanel.paintImmediately(0, 0, paintPanel.getWidth(), paintPanel.getHeight());
+         robot.run(10 * elapsed);
+         worldPanel.paintImmediately(0, 0, worldPanel.getWidth(), worldPanel.getHeight());
+         // X11 likes to kind of nagle algorithm events sometimes, which causes latency.
+         // Flush rendering out immediately.
          Toolkit.getDefaultToolkit().sync();
       }
    }
 
-   final static int MARGIN_PX = 10;
-
-   /*
-    * public static void main(String[] args) {
-    * System.out.println("Main thread is " + Thread.currentThread().getId());
-    * Environment e;
-    * try {
-    * e = new Environment(
-    * 
-    * "" +
-    * "+-+-+-+\n" +
-    * "|     |\n" +
-    * "+ + + +\n" +
-    * "|     |\n" +
-    * "+ + + +\n" +
-    * "| | | |\n" +
-    * "+ +-+ +\n" +
-    * "|     |\n" +
-    * "+-+-+-+\n");
-    * } catch (MapParseException ex) {
-    * throw new Error(ex);
-    * }
-    * // Environment e = new Environment(3, 4);
-    * // e.addWall(new Coord2D(0, 0), Direction.RIGHT);
-    * // e.addWall(new Coord2D(1, 1), Direction.DOWN);
-    * new RobotWindow("Robot Land", e, new ContinuousRobot(e, new Pose2D(1, 2,
-    * Direction.LEFT))).setVisible(true);
-    * 
-    * }
-    */
 }
