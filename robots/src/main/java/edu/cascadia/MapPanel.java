@@ -49,6 +49,7 @@ public class MapPanel extends JPanel {
 
    @Override
    public void paintComponent(Graphics gr) {
+
       // Shouldn't happen, but be paranoid.
       if (getWidth() == 0 || getHeight() == 0) {
          return;

@@ -52,6 +52,7 @@ public class RobotWindow extends JFrame {
    final static int MARGIN_PX = 10;
 
    public static void main(String[] args) {
+      System.out.println("Main thread is " + Thread.currentThread().getId());
       World w = new World(3, 4);
       w.addWall(new Coord2D(0, 0), Direction.RIGHT);
       w.addWall(new Coord2D(1, 1), Direction.DOWN);
