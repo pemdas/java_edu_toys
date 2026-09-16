@@ -1,4 +1,4 @@
-package edu.cascadia;
+package edu.cascadia.roboworld;
 
 // This is the class that students actually interact with.  
 
@@ -18,6 +18,6 @@ public class RoboWorld {
    }
 
    private static Robot test1Scene() {
-
+      return null;
    }
 }

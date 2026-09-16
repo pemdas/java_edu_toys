@@ -1,4 +1,4 @@
-package edu.cascadia;
+package edu.cascadia.roboworld;
 
 // FIXME - Create GUI stuff on the swing thread, not the main thread.
 //

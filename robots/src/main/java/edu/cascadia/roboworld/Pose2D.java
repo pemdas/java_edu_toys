@@ -1,4 +1,4 @@
-package edu.cascadia;
+package edu.cascadia.roboworld;
 
 /**
  * Pose of a robot in continuous 2d space.

@@ -1,4 +1,4 @@
-package edu.cascadia;
+package edu.cascadia.roboworld;
 
 /**
  * This class represents an environment in which a robot operates. This includes

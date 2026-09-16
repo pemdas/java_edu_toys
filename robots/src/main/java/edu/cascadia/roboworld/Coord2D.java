@@ -1,4 +1,4 @@
-package edu.cascadia;
+package edu.cascadia.roboworld;
 
 public class Coord2D
       implements Comparable<Coord2D> {

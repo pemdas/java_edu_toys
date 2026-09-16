@@ -1,4 +1,4 @@
-package edu.cascadia;
+package edu.cascadia.roboworld;
 
 public class ContinuousRobot implements Robot {
    private Environment env;

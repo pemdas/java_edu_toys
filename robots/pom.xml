@@ -11,8 +11,8 @@
    </parent>
 
    <groupId>edu.cascadia</groupId>
-   <artifactId>RobotWorld</artifactId>
+   <artifactId>roboworld</artifactId>
    <version>0.1</version>
 
-   <name>RobotWorld Library</name>
+   <name>RoboWorld Library</name>
 </project>
