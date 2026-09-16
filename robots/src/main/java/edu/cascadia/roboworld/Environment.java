@@ -26,6 +26,9 @@ public class Environment {
    private boolean[][] rightWalls;
    private boolean[][] bottomWalls;
 
+   /**
+    * Create an empty environment of the given size.
+    */
    public Environment(int width, int height) {
       assert width > 0;
       assert height > 0;
@@ -36,6 +39,93 @@ public class Environment {
       // bottom row has implicit bottom walls.
       rightWalls = new boolean[width - 1][height];
       bottomWalls = new boolean[width][height - 1];
+   }
+
+   /** 
+    * Create an environment from ASCII art of the walls.  The ASCII art looks like this:
+    * 
+    * @formatter:off
+    * +-+-+-+-+
+    * | |     |
+    * + + + + +
+    * |     | |
+    * +-+ + + +
+    * |   |   |
+    * +-+-+-+-+
+    *
+    * @formatter:on
+    * That would create a map which is width 3, height 2, and has 4 interior walls.  Every 'corner' space must be a plus,
+    * even if no walls attached at that corner, and the exterior rectangle must always have walls. 
+    * 
+    * The parser trims whitespace at the start and end of lines, as well as any whitespace at the start or end of input.
+    */
+
+   static class MapParseException extends Exception {
+      public MapParseException(String msg) {
+         super(msg);
+      }
+   }
+
+   public Environment(String asciiArt) throws MapParseException {
+      // Regular expressions used to validate the map.
+
+      String input = asciiArt.trim();
+      // Note this split also trims whitespace at the start and end of each line as
+      // well.
+      String[] lines = input.split("\\s*\n\\s*");
+      validateAsciiArtMap(lines);
+      width = lines[0].length() / 2;
+      height = lines.length / 2;
+      rightWalls = new boolean[width - 1][height];
+      bottomWalls = new boolean[width][height - 1];
+      for (int y = 0; y < height; y++) {
+         String line = lines[2 * y + 1];
+         for (int x = 0; x < width - 1; x++) {
+            if (line.charAt(2 * x + 2) == '|') {
+               rightWalls[x][y] = true;
+            }
+         }
+      }
+      for (int y = 0; y < height - 1; y++) {
+         String line = lines[2 * y + 2];
+         for (int x = 0; x < width; x++) {
+            if (line.charAt(2 * x + 1) == '-') {
+               bottomWalls[x][y] = true;
+            }
+         }
+      }
+   }
+
+   // Validation regexps.
+   private static final String TOP_BOTTOM_REGEX = "\\+-\\+(-\\+)*";
+   // 'odd' and 'even' here are based on the 0-based line index.
+   private static final String ODD_LINE_REGEX = "\\|( [\\| ])* \\|";
+   private static final String EVEN_LINE_REGEX = "\\+([- ]\\+)+";
+
+   // Validate an ascii art map that has been split into lines for us. If this
+   // returns without throwing an exception, the map is well formed.
+   private void validateAsciiArtMap(String[] lines) throws MapParseException {
+      // Do basic checking first.
+      if (lines.length < 3) {
+         throw new MapParseException("Insufficient lines");
+      }
+      if (lines.length % 2 == 0) {
+         throw new MapParseException("Number of lines must be odd");
+      }
+      if (!lines[0].matches(TOP_BOTTOM_REGEX)) {
+         throw new MapParseException("Malformed line 1");
+      }
+      int firstLineLength = lines[0].length();
+      for (int i = 1; i < lines.length - 1; i++) {
+         if (lines[i].length() != firstLineLength ||
+               !lines[i].matches((i % 2 == 0) ? EVEN_LINE_REGEX : ODD_LINE_REGEX)) {
+            throw new MapParseException("Malformed line " + (i + 1));
+         }
+      }
+      if (lines[lines.length - 1].length() != firstLineLength ||
+            !lines[lines.length - 1].matches(TOP_BOTTOM_REGEX)) {
+         throw new MapParseException("Malformed line " + (lines.length));
+      }
    }
 
    public void addWall(Coord2D pos, Direction direction) {

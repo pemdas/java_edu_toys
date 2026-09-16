@@ -18,6 +18,21 @@ package edu.cascadia.roboworld;
 
 // This encapsulates everything we need to run a scenario -- the starting states of the robot, environment, and also any goals that must be satisfied for 
 // the scenario to be complete.
+//
+// It's also the entry point for users to create a scenario and play it. 
 public class Scenario {
+   static final public int TEST1 = 0;
 
+   static Robot setUp(int scenarioId) {
+      switch (scenarioId) {
+         case TEST1:
+            return test1Scene();
+         default:
+            throw new Error("Unknown scenario id: " + scenarioId);
+      }
+   }
+
+   private static Robot test1Scene() {
+      return null;
+   }
 }

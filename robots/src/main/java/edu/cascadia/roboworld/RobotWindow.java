@@ -15,6 +15,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 
+import edu.cascadia.roboworld.Environment.MapParseException;
+
 public class RobotWindow extends JFrame {
    private JPanel paintPanel;
 
@@ -52,9 +54,26 @@ public class RobotWindow extends JFrame {
 
    public static void main(String[] args) {
       System.out.println("Main thread is " + Thread.currentThread().getId());
-      Environment e = new Environment(3, 4);
-      e.addWall(new Coord2D(0, 0), Direction.RIGHT);
-      e.addWall(new Coord2D(1, 1), Direction.DOWN);
+      Environment e;
+      try {
+         e = new Environment(
+
+               "" +
+                     "+-+-+-+\n" +
+                     "|     |\n" +
+                     "+ + + +\n" +
+                     "|     |\n" +
+                     "+ + + +\n" +
+                     "| | | |\n" +
+                     "+ +-+ +\n" +
+                     "|     |\n" +
+                     "+-+-+-+\n");
+      } catch (MapParseException ex) {
+         throw new Error(ex);
+      }
+      // Environment e = new Environment(3, 4);
+      // e.addWall(new Coord2D(0, 0), Direction.RIGHT);
+      // e.addWall(new Coord2D(1, 1), Direction.DOWN);
       new RobotWindow("Robot Land", e, new ContinuousRobot(e, new Pose2D(1, 2, Direction.LEFT))).setVisible(true);
 
    }
