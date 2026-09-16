@@ -16,14 +16,13 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 
 public class RobotWindow extends JFrame {
-
    private JPanel paintPanel;
 
-   public RobotWindow(String title, World world, ContinuousRobot robot) {
+   public RobotWindow(String title, Environment env, ContinuousRobot robot) {
       super(title);
       setMinimumSize(new Dimension(400, 400));
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      paintPanel = new MapPanel(world, robot, Color.CYAN);
+      paintPanel = new WorldPanel(env, robot, Color.CYAN);
       getContentPane().add(paintPanel, BorderLayout.CENTER);
       JPanel bottomPanel = new JPanel();
       ImageIcon playIcon = new ImageIcon(Resources.loadImage("play_button.png"));
@@ -53,10 +52,10 @@ public class RobotWindow extends JFrame {
 
    public static void main(String[] args) {
       System.out.println("Main thread is " + Thread.currentThread().getId());
-      World w = new World(3, 4);
-      w.addWall(new Coord2D(0, 0), Direction.RIGHT);
-      w.addWall(new Coord2D(1, 1), Direction.DOWN);
-      new RobotWindow("Robot Land", w, new ContinuousRobot(w, new Pose2D(1, 2, Direction.LEFT))).setVisible(true);
+      Environment e = new Environment(3, 4);
+      e.addWall(new Coord2D(0, 0), Direction.RIGHT);
+      e.addWall(new Coord2D(1, 1), Direction.DOWN);
+      new RobotWindow("Robot Land", e, new ContinuousRobot(e, new Pose2D(1, 2, Direction.LEFT))).setVisible(true);
 
    }
 }

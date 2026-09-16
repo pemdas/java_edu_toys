@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-public class WorldTest {
+public class EnvironmentTest {
 
    @Test
    public void testImplicitWalls() {
@@ -17,7 +17,7 @@ public class WorldTest {
       // |       |
       // +---+---+
       // @formatter:on
-      World w = new World(2, 2);
+      Environment w = new Environment(2, 2);
       assertTrue(w.isFacingWall(new Coord2D(0, 0), Direction.UP));
       assertTrue(w.isFacingWall(new Coord2D(0, 0), Direction.LEFT));
       assertFalse(w.isFacingWall(new Coord2D(0, 0), Direction.DOWN));
@@ -50,7 +50,7 @@ public class WorldTest {
       // |   |   |
       // +---+---+
       // @formatter:on
-      World w = new World(2, 3);
+      Environment w = new Environment(2, 3);
       w.addWall(new Coord2D(0, 1), Direction.RIGHT);
       w.addWall(new Coord2D(1, 2), Direction.LEFT);
       w.addWall(new Coord2D(1, 1), Direction.LEFT); // nop, wall exists
@@ -71,7 +71,7 @@ public class WorldTest {
       // |           |
       // +---+---+---+
       // @formatter:on
-      World w = new World(3, 2);
+      Environment w = new Environment(3, 2);
       w.addWall(new Coord2D(0, 1), Direction.UP);
       w.addWall(new Coord2D(0, 0), Direction.DOWN); // nop, wall exists
       w.addWall(new Coord2D(2, 0), Direction.DOWN);

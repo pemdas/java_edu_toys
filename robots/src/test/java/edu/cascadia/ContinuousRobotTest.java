@@ -5,16 +5,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 public class ContinuousRobotTest {
-   private World world;
+   private Environment env;
 
    public ContinuousRobotTest() {
-      world = new World(2, 2);
-      world.addWall(new Coord2D(0, 0), Direction.RIGHT);
+      env = new Environment(2, 2);
+      env.addWall(new Coord2D(0, 0), Direction.RIGHT);
    }
 
    @Test
    public void turnLeft() {
-      ContinuousRobot r = new ContinuousRobot(world, new Pose2D(0, 1, Direction.RIGHT));
+      ContinuousRobot r = new ContinuousRobot(env, new Pose2D(0, 1, Direction.RIGHT));
       r.run(1000);
       assertEquals(r.getPose(), new Pose2D(0, 1, Direction.RIGHT));
       r.turnLeft();
@@ -29,7 +29,7 @@ public class ContinuousRobotTest {
 
    @Test
    public void turnRight() {
-      ContinuousRobot r = new ContinuousRobot(world, new Pose2D(1, 0, Direction.DOWN));
+      ContinuousRobot r = new ContinuousRobot(env, new Pose2D(1, 0, Direction.DOWN));
       r.run(1000);
       assertEquals(r.getPose(), new Pose2D(1, 0, Direction.DOWN));
       r.turnRight();
@@ -53,7 +53,7 @@ public class ContinuousRobotTest {
       // +---+---+
       // @formatter:on
 
-      ContinuousRobot r = new ContinuousRobot(world, new Pose2D(0, 0, Direction.RIGHT));
+      ContinuousRobot r = new ContinuousRobot(env, new Pose2D(0, 0, Direction.RIGHT));
       r.run(1000);
       assertEquals(new Pose2D(0, 0, Direction.RIGHT), r.getPose());
       r.turnLeft();
@@ -80,7 +80,7 @@ public class ContinuousRobotTest {
    /*
     * @Test
     * public void crash() {
-    * Robot r = new Robot(world, new Coord2D(0, 0), Direction.RIGHT);
+    * Robot r = new Robot(env, new Coord2D(0, 0), Direction.RIGHT);
     * assertFalse(r.crashed());
     * r.moveForward();
     * assertTrue(r.crashed());

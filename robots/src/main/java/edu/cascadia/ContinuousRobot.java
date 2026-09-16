@@ -1,7 +1,7 @@
 package edu.cascadia;
 
 public class ContinuousRobot implements Robot {
-   private World world;
+   private Environment env;
    private Pose2D pose;
    private Pose2D targetPose = null;
    private boolean isCrashed = false;
@@ -14,10 +14,10 @@ public class ContinuousRobot implements Robot {
    // Note that since the coordinate system is x-right, y-down, rotation is
    // clockwise.
 
-   public ContinuousRobot(World world, Pose2D pose) {
-      this.world = world;
+   public ContinuousRobot(Environment env, Pose2D pose) {
+      this.env = env;
       this.pose = new Pose2D(pose);
-      assert world.isInBounds(pose.cellX(), pose.cellY());
+      assert env.isInBounds(pose.cellX(), pose.cellY());
    }
 
    synchronized public void run(double seconds) {
@@ -75,7 +75,7 @@ public class ContinuousRobot implements Robot {
          isCrashed = true;
          return;
       }
-      // Don't check explicitly for moving out of bounds -- the world enforces
+      // Don't check explicitly for moving out of bounds -- the map enforces
       // walls around the edges, so it should be impossible.
       Direction dir = pose.direction();
       switch (dir) {
@@ -101,7 +101,7 @@ public class ContinuousRobot implements Robot {
     * @return true if the way is blocked, false otherwise.
     */
    public boolean blocked() {
-      return world.isFacingWall(pose.coord2D(), pose.direction());
+      return env.isFacingWall(pose.coord2D(), pose.direction());
    }
 
    /**

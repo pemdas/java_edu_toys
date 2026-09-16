@@ -15,9 +15,9 @@ import java.awt.image.RenderedImage;
 import javax.swing.JPanel;
 
 /**
- * Swing widget for displaying the state of the world.
+ * Swing widget for displaying the state of the World.
  */
-public class MapPanel extends JPanel {
+public class WorldPanel extends JPanel {
 
    // Maybe make these configurable, eventually?
    final static float WALL_WIDTH = .07f;
@@ -29,7 +29,7 @@ public class MapPanel extends JPanel {
    private BufferedImage cachedBackgroundImage = null;
    // Transform that sets up the rendering coordinate system such that each cell is
    // 1x1, with the origin in the
-   // middle of the wall in the top left of the world.
+   // middle of the wall in the top left of the map.
    private AffineTransform cachedTransform = null;
 
    final private static AffineTransform IDENTITY_TRANSFORM = new AffineTransform();
@@ -37,12 +37,12 @@ public class MapPanel extends JPanel {
    // Color used to fill in bars at the edges when the aspect ratio isn't perfect.
    private Color letterboxColor;
 
-   // World and robot we're rendering
-   private World world;
+   // Environment and robot we're rendering
+   private Environment env;
    private ContinuousRobot robot;
 
-   public MapPanel(World w, ContinuousRobot r, Color letterboxColor) {
-      world = w;
+   public WorldPanel(Environment e, ContinuousRobot r, Color letterboxColor) {
+      env = e;
       robot = r;
       this.letterboxColor = letterboxColor;
    }
@@ -112,10 +112,10 @@ public class MapPanel extends JPanel {
       g.setTransform(saved);
    }
 
-   // Return the pixel dimensions we'll use to render the world.
+   // Return the pixel dimensions we'll use to render the env.
    private Dimension worldSizePx() {
-      float worldRenderWidth = world.getWidth() + WALL_WIDTH;
-      float worldRenderHeight = world.getHeight() + WALL_WIDTH;
+      float worldRenderWidth = env.getWidth() + WALL_WIDTH;
+      float worldRenderHeight = env.getHeight() + WALL_WIDTH;
       float worldRenderAspectRatio = worldRenderWidth / worldRenderHeight;
       float panelAspectRatio = getWidth() / (float) getHeight();
       Dimension ret = new Dimension();
@@ -147,8 +147,8 @@ public class MapPanel extends JPanel {
       // not be precisely the same in the
       // horizontal and vertical directions, but it should be close enough that any
       // distortion is unnoticeable.
-      float hCellSize = (float) (wPx / (world.getWidth() + WALL_WIDTH));
-      float vCellSize = (float) (hPx / (world.getHeight() + WALL_WIDTH));
+      float hCellSize = (float) (wPx / (env.getWidth() + WALL_WIDTH));
+      float vCellSize = (float) (hPx / (env.getHeight() + WALL_WIDTH));
 
       g.scale(hCellSize, vCellSize);
       g.translate(HALF_WALL_WIDTH, HALF_WALL_WIDTH);
@@ -156,30 +156,30 @@ public class MapPanel extends JPanel {
       g.setColor(WALL_COLOR);
       g.setStroke(new BasicStroke(WALL_WIDTH));
       // Draw the outer walls.
-      g.draw(new Line2D.Float(0, 0, world.getWidth(), 0)); // Top
-      g.draw(new Line2D.Float(0, world.getHeight(), world.getWidth(), world.getHeight())); // Bottom
-      g.draw(new Line2D.Float(0, 0, 0, world.getHeight())); // Left
-      g.draw(new Line2D.Float(world.getWidth(), 0, world.getWidth(), world.getHeight())); // Right
+      g.draw(new Line2D.Float(0, 0, env.getWidth(), 0)); // Top
+      g.draw(new Line2D.Float(0, env.getHeight(), env.getWidth(), env.getHeight())); // Bottom
+      g.draw(new Line2D.Float(0, 0, 0, env.getHeight())); // Left
+      g.draw(new Line2D.Float(env.getWidth(), 0, env.getWidth(), env.getHeight())); // Right
 
       // Draw top walls
-      for (int x = 0; x < world.getWidth(); x++) {
-         for (int y = 1; y < world.getHeight(); y++) {
-            if (world.isFacingWall(new Coord2D(x, y), Direction.UP)) {
+      for (int x = 0; x < env.getWidth(); x++) {
+         for (int y = 1; y < env.getHeight(); y++) {
+            if (env.isFacingWall(new Coord2D(x, y), Direction.UP)) {
                g.draw(new Line2D.Float(x, y, x + 1, y));
             }
          }
       }
       // Draw left walls
-      for (int x = 1; x < world.getWidth(); x++) {
-         for (int y = 0; y < world.getHeight(); y++) {
-            if (world.isFacingWall(new Coord2D(x, y), Direction.LEFT)) {
+      for (int x = 1; x < env.getWidth(); x++) {
+         for (int y = 0; y < env.getHeight(); y++) {
+            if (env.isFacingWall(new Coord2D(x, y), Direction.LEFT)) {
                g.draw(new Line2D.Float(x, y, x, y + 1));
             }
          }
       }
       // Draw "pillars"
-      for (int x = 1; x < world.getWidth(); x++) {
-         for (int y = 1; y < world.getHeight(); y++) {
+      for (int x = 1; x < env.getWidth(); x++) {
+         for (int y = 1; y < env.getHeight(); y++) {
             g.fill(new Ellipse2D.Float(x - WALL_WIDTH, y - WALL_WIDTH, 2 * WALL_WIDTH, 2 * WALL_WIDTH));
          }
       }
