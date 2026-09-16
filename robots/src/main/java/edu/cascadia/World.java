@@ -38,7 +38,7 @@ public class World {
    }
 
    public void addWall(Coord2D pos, Direction direction) {
-      assert isInBounds(pos);
+      assert isInBounds(pos.x, pos.y);
       if (isExternalBoundary(pos, direction)) {
          // Nothing to do.
          return;
@@ -70,7 +70,11 @@ public class World {
    }
 
    public boolean isInBounds(Coord2D pos) {
-      return pos.x >= 0 && pos.y >= 0 && pos.x < width && pos.y < height;
+      return isInBounds(pos.x, pos.y);
+   }
+
+   public boolean isInBounds(int x, int y) {
+      return x >= 0 && y >= 0 && x < width && y < height;
    }
 
    private boolean isExternalBoundary(Coord2D pos, Direction direction) {

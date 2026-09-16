@@ -4,8 +4,8 @@ public class Main {
    public static void main(String[] args) {
       World world = new World(4, 5);
       world.addWall(new Coord2D(0, 0), Direction.RIGHT);
-      Robot r = new Robot(world, new Coord2D(1, 1), Direction.LEFT);
-      r.turnLeft();
+      // Robot r = new Robot(world, new Coord2D(1, 1), Direction.LEFT);
+      // r.turnLeft();
       System.out.println("Hello, world!");
    }
 }
