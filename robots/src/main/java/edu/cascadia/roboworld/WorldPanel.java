@@ -10,7 +10,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 
 import javax.swing.JPanel;
 
@@ -31,6 +30,8 @@ public class WorldPanel extends JPanel {
    // 1x1, with the origin in the
    // middle of the wall in the top left of the map.
    private AffineTransform cachedTransform = null;
+
+   private MapPanelSprite robotSprite = new MapPanelSprite(Resources.ROBOT_SPRITE, Resources.ROBOT_SPRITE_CELL_SIZE);
 
    final private static AffineTransform IDENTITY_TRANSFORM = new AffineTransform();
 
@@ -88,8 +89,11 @@ public class WorldPanel extends JPanel {
       }
       g.drawRenderedImage(cachedBackgroundImage, IDENTITY_TRANSFORM);
       g.transform(cachedTransform);
-      Pose2D robotPose = robot.getPose();
-      drawSprite(g, Resources.ROBOT_SPRITE, .6, robotPose.x, robotPose.y, robotPose.heading);
+      // Pose2D robotPose = robot.getPose();
+      robotSprite.setPosition(robot.getPose());
+      robotSprite.draw(g, getSize());
+      // drawSprite(g, Resources.ROBOT_SPRITE, .6, robotPose.x, robotPose.y,
+      // robotPose.heading);
       g.setTransform(savedTransform);
       // System.out.println("Paint took " + (System.nanoTime() - start) /
       // 1_000_000_000.0 + " seconds");
@@ -102,19 +106,21 @@ public class WorldPanel extends JPanel {
    // will be scaled to this.
    //
    // Rotation is clockwise, and in radians.
-   static private void drawSprite(Graphics2D g, RenderedImage sprite, double spriteCellSize, double centerX,
-         double centerY,
-         double rotation) {
-      AffineTransform saved = g.getTransform();
-      double scale = spriteCellSize / Math.max(sprite.getHeight(), sprite.getWidth());
-      double cellWidth = scale * sprite.getWidth();
-      double cellHeight = scale * sprite.getHeight();
-      g.translate(centerX - cellWidth / 2.0, centerY - cellHeight / 2.0);
-      g.rotate(rotation, cellWidth / 2.0, cellHeight / 2.0);
-      g.drawRenderedImage(sprite, AffineTransform.getScaleInstance(scale, scale));
-      g.setTransform(saved);
-   }
-
+   /*
+    * static private void drawSprite(Graphics2D g, RenderedImage sprite, double
+    * spriteCellSize, double centerX,
+    * double centerY, double rotation) {
+    * AffineTransform saved = g.getTransform();
+    * double scale = spriteCellSize / Math.max(sprite.getHeight(),
+    * sprite.getWidth());
+    * double cellWidth = scale * sprite.getWidth();
+    * double cellHeight = scale * sprite.getHeight();
+    * g.translate(centerX - cellWidth / 2.0, centerY - cellHeight / 2.0);
+    * g.rotate(rotation, cellWidth / 2.0, cellHeight / 2.0);
+    * g.drawRenderedImage(sprite, AffineTransform.getScaleInstance(scale, scale));
+    * g.setTransform(saved);
+    * }
+    */
    // Return the pixel dimensions we'll use to render the env.
    private Dimension worldSizePx() {
       float worldRenderWidth = env.getWidth() + WALL_WIDTH;

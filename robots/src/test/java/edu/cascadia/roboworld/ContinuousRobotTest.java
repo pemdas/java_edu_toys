@@ -15,7 +15,7 @@ public class ContinuousRobotTest {
    @Test
    public void turnLeft() {
       ContinuousRobot r = new ContinuousRobot(env, new Pose2D(0, 1, Direction.RIGHT));
-      r.run(1000);
+      r.advance(1000);
       assertEquals(r.getPose(), new Pose2D(0, 1, Direction.RIGHT));
       r.turnLeft();
       assertEquals(r.getPose(), new Pose2D(0, 1, Direction.UP));
@@ -30,7 +30,7 @@ public class ContinuousRobotTest {
    @Test
    public void turnRight() {
       ContinuousRobot r = new ContinuousRobot(env, new Pose2D(1, 0, Direction.DOWN));
-      r.run(1000);
+      r.advance(1000);
       assertEquals(r.getPose(), new Pose2D(1, 0, Direction.DOWN));
       r.turnRight();
       assertEquals(r.getPose(), new Pose2D(1, 0, Direction.LEFT));
@@ -54,7 +54,7 @@ public class ContinuousRobotTest {
       // @formatter:on
 
       ContinuousRobot r = new ContinuousRobot(env, new Pose2D(0, 0, Direction.RIGHT));
-      r.run(1000);
+      r.advance(1000);
       assertEquals(new Pose2D(0, 0, Direction.RIGHT), r.getPose());
       r.turnLeft();
       assertEquals(new Pose2D(0, 0, Direction.UP), r.getPose());

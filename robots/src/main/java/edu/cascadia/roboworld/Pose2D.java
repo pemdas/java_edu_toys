@@ -1,5 +1,7 @@
 package edu.cascadia.roboworld;
 
+import java.util.Arrays;
+
 /**
  * Pose of a robot in continuous 2d space.
  */
@@ -148,4 +150,12 @@ public class Pose2D {
       }
    }
 
+   @Override
+   public int hashCode() {
+      double[] tmp = new double[3];
+      tmp[0] = x;
+      tmp[1] = y;
+      tmp[2] = heading;
+      return Arrays.hashCode(tmp);
+   }
 }

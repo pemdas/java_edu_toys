@@ -3,10 +3,10 @@ package edu.cascadia.roboworld;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Hashtable;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -23,6 +23,14 @@ public class RobotWindow extends JFrame {
    private final static int TARGET_FPS = 30;
 
    private JPanel worldPanel;
+
+   private JSlider speedSlider;
+   static private int[] SPEED_SLIDER_VALUES = { 1, 2, 5, 10, 100 };
+
+   private JButton playButton;
+   private boolean running = false;
+   private ImageIcon playIcon = new ImageIcon(Resources.PLAY_ICON);
+   private ImageIcon pauseIcon = new ImageIcon(Resources.PAUSE_ICON);
 
    // The application (not swing) thread.
    private Thread appThread;
@@ -41,20 +49,41 @@ public class RobotWindow extends JFrame {
       worldPanel = new WorldPanel(env, robot, Color.CYAN);
       getContentPane().add(worldPanel, BorderLayout.CENTER);
       JPanel bottomPanel = new JPanel();
-      ImageIcon playIcon = new ImageIcon(Resources.loadImage("play_button.png"));
+      // ImageIcon playIcon = new ImageIcon(Resources.loadImage("play_button.png"));
 
-      JButton button = new JButton();
-      button.setIcon(playIcon);
+      playButton = new JButton();
+      playButton.setIcon(playIcon);
+      playButton.setFocusPainted(false);
+      playButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            playButton.setIcon(running ? playIcon : pauseIcon);
+            running = !running;
+         }
+      });
 
-      JSlider slider = new JSlider(JSlider.HORIZONTAL, 1, 100, 5);
       bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 20));
-      bottomPanel.add(button);
+      bottomPanel.add(playButton);
       bottomPanel.add(Box.createRigidArea(new Dimension(40, 0)));
+
       JLabel speedLabel = new JLabel("Speed");
-      Resources.loadFont("NotoSans-Light.ttf");
-      speedLabel.setFont(new Font("Noto Sans Light", Font.PLAIN, 18));
+      speedLabel.setFont(Resources.PRIMARY_FONT.deriveFont(18.f));
       bottomPanel.add(speedLabel);
-      bottomPanel.add(slider);
+      speedSlider = new JSlider(JSlider.HORIZONTAL, 0, SPEED_SLIDER_VALUES.length - 1, 0);
+      Hashtable<Integer, JLabel> sliderLabels = new Hashtable<>();
+      for (int i = 0; i < SPEED_SLIDER_VALUES.length; i++) {
+         JLabel l = new JLabel("" + SPEED_SLIDER_VALUES[i] + "x");
+         l.setFont(Resources.PRIMARY_FONT);
+         sliderLabels.put(i, l);
+      }
+      speedSlider.setMajorTickSpacing(1);
+      speedSlider.setLabelTable(sliderLabels);
+      speedSlider.setPaintLabels(true);
+      speedSlider.setPaintTicks(true);
+      speedSlider.setSnapToTicks(true);
+      speedSlider.setUI(new MetalSnapSliderUI());
+      bottomPanel.add(speedSlider);
+      bottomPanel.add(Box.createGlue());
 
       bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
       getContentPane().add(bottomPanel, BorderLayout.PAGE_END);
@@ -76,14 +105,14 @@ public class RobotWindow extends JFrame {
       if (!appThread.isAlive()) {
          // TODO - Check goal states.
          System.out.println("App thread exited");
-         System.out.println(robot.numTurnLeftCallSites() + " turn left callsites");
          timer.stop();
       } else {
          long now = System.nanoTime();
          double elapsed = (now - lastTimerNanos) / 1_000_000_000.0;
          lastTimerNanos = now;
-         // System.out.println("Running " + elapsed + " seconds");
-         robot.run(10 * elapsed);
+         if (running) {
+            robot.advance(SPEED_SLIDER_VALUES[speedSlider.getValue()] * elapsed);
+         }
          worldPanel.paintImmediately(0, 0, worldPanel.getWidth(), worldPanel.getHeight());
          // X11 likes to kind of nagle algorithm events sometimes, which causes latency.
          // Flush rendering out immediately.

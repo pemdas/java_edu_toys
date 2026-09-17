@@ -11,7 +11,17 @@ import java.io.UncheckedIOException;
 import javax.imageio.ImageIO;
 
 public class Resources {
+   static {
+      loadFont("NotoSans-Light.ttf");
+   }
+
    final public static BufferedImage ROBOT_SPRITE = loadImage("robot.png");
+   final public static double ROBOT_SPRITE_CELL_SIZE = 0.6;
+
+   final public static BufferedImage PLAY_ICON = loadImage("play_button.png");
+   final public static BufferedImage PAUSE_ICON = loadImage("pause_button.png");
+
+   final public static Font PRIMARY_FONT = new Font("Noto Sans Light", Font.PLAIN, 14);
 
    public static BufferedImage loadImage(String name) {
       try (InputStream in = Resources.class.getResourceAsStream(name)) {

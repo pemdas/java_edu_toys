@@ -1,5 +1,6 @@
 package edu.cascadia.roboworld;
 
+import java.util.HashSet;
 import java.util.NoSuchElementException;
 
 import javax.swing.SwingUtilities;
@@ -41,6 +42,19 @@ public class Scenario {
       this.robot = r;
    }
 
+   HashSet<Pose2D> goalPoses = new HashSet<>();
+
+   // Add a goal position for the robot. If the robot ends in any goal position, it
+   // has met the goal. If no goal poses are added, then the robot can end in any
+   // position.
+   void addGoalPose(Pose2D pose) {
+      goalPoses.add(pose);
+   }
+
+   public boolean goalsMet() {
+      return goalPoses.isEmpty() || goalPoses.contains(robot.getPose());
+   }
+
    static Robot setUp(int scenarioId) {
       Scenario scene = createScenarioFromId(scenarioId);
       try {
@@ -63,7 +77,6 @@ public class Scenario {
    }
 
    void createAndShowGUI(Thread appThread) {
-      System.out.println("Thread id is " + appThread.getId());
       new RobotWindow("Robot Land", appThread, env, robot).setVisible(true);
 
    }
