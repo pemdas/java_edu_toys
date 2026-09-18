@@ -17,6 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
 public class RobotWindow extends JFrame {
@@ -67,23 +68,27 @@ public class RobotWindow extends JFrame {
       bottomPanel.add(Box.createRigidArea(new Dimension(40, 0)));
 
       JLabel speedLabel = new JLabel("Speed");
+      speedLabel.setVerticalAlignment(SwingConstants.TOP);
       speedLabel.setFont(Resources.PRIMARY_FONT.deriveFont(18.f));
       bottomPanel.add(speedLabel);
       speedSlider = new JSlider(JSlider.HORIZONTAL, 0, SPEED_SLIDER_VALUES.length - 1, 0);
       Hashtable<Integer, JLabel> sliderLabels = new Hashtable<>();
       for (int i = 0; i < SPEED_SLIDER_VALUES.length; i++) {
          JLabel l = new JLabel("" + SPEED_SLIDER_VALUES[i] + "x");
-         l.setFont(Resources.PRIMARY_FONT);
+         l.setFont(Resources.PRIMARY_FONT.deriveFont(10.f));
          sliderLabels.put(i, l);
       }
       speedSlider.setMajorTickSpacing(1);
       speedSlider.setLabelTable(sliderLabels);
       speedSlider.setPaintLabels(true);
-      speedSlider.setPaintTicks(true);
+      // speedSlider.setPaintTicks(true);
       speedSlider.setSnapToTicks(true);
       speedSlider.setUI(new MetalSnapSliderUI());
+      speedSlider.setMinimumSize(new Dimension(10, 0));
+      speedSlider.setMaximumSize(new Dimension(10, 1000));
+      bottomPanel.add(Box.createRigidArea(new Dimension(5, 0))); // Add a little space between label and slider
       bottomPanel.add(speedSlider);
-      bottomPanel.add(Box.createGlue());
+      bottomPanel.add(Box.createHorizontalGlue());
 
       bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.X_AXIS));
       getContentPane().add(bottomPanel, BorderLayout.PAGE_END);
