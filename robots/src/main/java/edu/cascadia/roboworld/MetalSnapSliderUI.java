@@ -10,13 +10,11 @@ import javax.swing.plaf.metal.MetalSliderUI;
 public class MetalSnapSliderUI extends MetalSliderUI {
 
     private MouseMotionListener myMouseMotionListener = new MouseMotionAdapter() {
-
         @Override
         public void mouseDragged(MouseEvent e) {
             calculateThumbLocation();
             slider.repaint();
         }
-
     };
 
     @Override

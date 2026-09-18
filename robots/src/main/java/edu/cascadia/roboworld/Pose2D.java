@@ -13,7 +13,7 @@ public class Pose2D {
    static private double UP = 0;
 
    static private double TRANSLATION_SPEED = 1.0;
-   static private double ROTATION_SPEED = 1.0;
+   static private double ROTATION_SPEED = 1.5;
 
    public double x;
    public double y;
